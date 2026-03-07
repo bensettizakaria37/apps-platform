@@ -16,6 +16,7 @@ export default function Navbar({ page, setPage }) {
           { id:"pdf",    label:"📄 PDF → DOCX" },
           { id:"ocr",    label:"🖼️ OCR" },
           { id:"secret", label:"🔐 Secret" },
+          { id:"compress", label:"🗜️ Compress PDF" },
         ].map(item=>(
           <button key={item.id} onClick={()=>setPage(item.id)} style={{
             padding:"6px 14px", borderRadius:"8px", border:"none",

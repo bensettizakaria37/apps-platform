@@ -2,7 +2,7 @@ const apps = [
   { id:"pdf",    icon:"📄", title:"PDF → DOCX",         desc:"Convertissez vos PDFs en documents Word éditables en un clic.",                      color:"#1d4ed8", bg:"#eff6ff", badge:"Disponible" },
   { id:"ocr",    icon:"🖼️", title:"OCR — Image → Texte", desc:"Extrayez le texte de n'importe quelle image ou PDF scanné. FR, EN, AR.",             color:"#7c3aed", bg:"#f5f3ff", badge:"Disponible" },
   { id:"secret", icon:"🔐", title:"Secret Sharing",      desc:"Partagez des mots de passe et secrets via un lien unique qui s'autodétruit.",        color:"#d97706", bg:"#fffbeb", badge:"Disponible" },
-  { id:"soon",   icon:"🗜️", title:"Compresser PDF",      desc:"Réduisez la taille de vos PDFs sans perte de qualité visible.",                      color:"#9ca3af", bg:"#f9fafb", badge:"Bientôt" },
+  { id:"compress", icon:"🗜️", title:"Compresser PDF", desc:"Réduisez la taille de vos PDFs sans perte de qualité visible.", color:"#059669", bg:"#f0fdf4", badge:"Disponible" },
 ];
 
 export default function Home({ setPage }) {

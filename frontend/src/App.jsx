@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import PdfToDocx from "./pages/PdfToDocx";
 import Ocr from "./pages/Ocr";
 import Secret from "./pages/Secret";
+import CompressPdf from "./pages/CompressPdf";
 
 export default function App() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -17,6 +18,7 @@ export default function App() {
       {page==="pdf"    && <PdfToDocx />}
       {page==="ocr"    && <Ocr />}
       {page==="secret" && <Secret />}
+      {page==="compress" && <CompressPdf />}
     </div>
   );
 }

@@ -248,3 +248,59 @@ def delete_secret(secret_id: str):
     cur.execute("DELETE FROM secrets WHERE id = %s", (secret_id,))
     conn.commit(); cur.close(); conn.close()
     return {"deleted": True}
+
+# ─────────────────────────────────────────
+# PDF COMPRESS
+# ─────────────────────────────────────────
+@app.post("/pdf/compress")
+async def compress_pdf(file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Le fichier doit être un PDF")
+
+    tmp_id     = str(uuid.uuid4())
+    input_path = f"/tmp/{tmp_id}_input.pdf"
+    out_path   = f"/tmp/{tmp_id}_compressed.pdf"
+
+    try:
+        with open(input_path, "wb") as f:
+            f.write(await file.read())
+
+        original_size = os.path.getsize(input_path)
+
+        # Compression avec ghostscript
+        import subprocess
+        result = subprocess.run([
+            "gs", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.4",
+            "-dPDFSETTINGS=/ebook",
+            "-dNOPAUSE", "-dQUIET", "-dBATCH",
+            f"-sOutputFile={out_path}", input_path
+        ], capture_output=True, timeout=60)
+
+        if result.returncode != 0 or not os.path.exists(out_path):
+            raise HTTPException(status_code=500, detail="Compression échouée")
+
+        compressed_size = os.path.getsize(out_path)
+        reduction = round((1 - compressed_size / original_size) * 100, 1)
+
+        output_name = file.filename.replace(".pdf", "_compressed.pdf")
+        response = FileResponse(
+            path=out_path, filename=output_name,
+            media_type="application/pdf",
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "X-Original-Size": str(original_size),
+                "X-Compressed-Size": str(compressed_size),
+                "X-Reduction": str(reduction),
+            }
+        )
+        return response
+
+    except HTTPException:
+        raise
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=500, detail="Timeout — fichier trop volumineux")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+    finally:
+        if os.path.exists(input_path):
+            os.remove(input_path)
