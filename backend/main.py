@@ -21,7 +21,7 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["Content-Disposition"],
+    expose_headers=["Content-Disposition","X-Original-Size","X-Compressed-Size","X-Reduction"],
 )
 
 # ─────────────────────────────────────────
