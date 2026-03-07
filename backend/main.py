@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pdf2docx import Converter
@@ -6,7 +6,12 @@ import pytesseract
 from PIL import Image
 from pdf2image import convert_from_bytes
 from docx import Document as DocxDocument
-import io, os, uuid
+from cryptography.fernet import Fernet
+import psycopg2, psycopg2.extras
+import io, os, uuid, time
+from datetime import datetime, timedelta
+from pydantic import BaseModel
+from typing import Optional
 
 app = FastAPI(title="Apps Platform API")
 
@@ -20,11 +25,54 @@ app.add_middleware(
 )
 
 # ─────────────────────────────────────────
+# DATABASE
+# ─────────────────────────────────────────
+DB_URL = os.getenv("DATABASE_URL", "postgresql://appuser:apppass@postgres:5432/appsdb")
+
+def get_db():
+    return psycopg2.connect(DB_URL)
+
+def init_db():
+    conn = get_db()
+    cur  = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS secrets (
+            id          TEXT PRIMARY KEY,
+            ciphertext  TEXT NOT NULL,
+            expires_at  TIMESTAMP NOT NULL,
+            viewed      BOOLEAN DEFAULT FALSE,
+            created_at  TIMESTAMP DEFAULT NOW()
+        )
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
+
+# Init DB on startup
+import threading
+def try_init():
+    for i in range(10):
+        try:
+            init_db()
+            print("✅ DB initialized")
+            return
+        except Exception as e:
+            print(f"⏳ Waiting for DB... ({i+1}/10): {e}")
+            time.sleep(3)
+    print("❌ Could not connect to DB")
+
+threading.Thread(target=try_init, daemon=True).start()
+
+# Encryption key — in production use a fixed env var
+FERNET_KEY = os.getenv("FERNET_KEY", Fernet.generate_key().decode())
+fernet = Fernet(FERNET_KEY.encode() if isinstance(FERNET_KEY, str) else FERNET_KEY)
+
+# ─────────────────────────────────────────
 # HEALTH
 # ─────────────────────────────────────────
 @app.get("/health")
 def health():
-    return {"status": "ok", "services": ["pdf2docx", "ocr"]}
+    return {"status": "ok", "services": ["pdf2docx", "ocr", "secrets"]}
 
 # ─────────────────────────────────────────
 # PDF → DOCX
@@ -63,7 +111,7 @@ async def convert_pdf(file: UploadFile = File(...)):
 # ─────────────────────────────────────────
 ALLOWED_OCR = [".jpg",".jpeg",".png",".bmp",".tiff",".tif",".webp",".pdf"]
 
-def do_ocr(file_bytes: bytes, filename: str, lang: str) -> str:
+def do_ocr(file_bytes, filename, lang):
     ext = os.path.splitext(filename.lower())[1]
     if ext == ".pdf":
         images = convert_from_bytes(file_bytes, dpi=300)
@@ -79,11 +127,7 @@ def do_ocr(file_bytes: bytes, filename: str, lang: str) -> str:
         return pytesseract.image_to_string(img, lang=lang).strip()
 
 @app.post("/ocr")
-async def ocr_file(
-    file: UploadFile = File(...),
-    lang: str = "fra+eng+ara",
-    output: str = "text"
-):
+async def ocr_file(file: UploadFile = File(...), lang: str = "fra+eng+ara", output: str = "text"):
     ext = os.path.splitext(file.filename.lower())[1]
     if ext not in ALLOWED_OCR:
         raise HTTPException(status_code=400, detail=f"Format non supporté: {ext}")
@@ -92,22 +136,14 @@ async def ocr_file(
         extracted  = do_ocr(file_bytes, file.filename, lang)
         if not extracted:
             extracted = "Aucun texte détecté."
-
         if output == "text":
-            return JSONResponse({
-                "text": extracted,
-                "chars": len(extracted),
-                "words": len(extracted.split())
-            })
-
+            return JSONResponse({"text": extracted, "chars": len(extracted), "words": len(extracted.split())})
         tmp_id = str(uuid.uuid4())
-
         if output == "txt":
             path = f"/tmp/{tmp_id}.txt"
             with open(path, "w", encoding="utf-8") as f:
                 f.write(extracted)
             return FileResponse(path, filename=file.filename.rsplit(".",1)[0]+".txt", media_type="text/plain")
-
         if output == "docx":
             path = f"/tmp/{tmp_id}.docx"
             doc = DocxDocument()
@@ -126,3 +162,89 @@ async def ocr_file(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur OCR: {str(e)}")
+
+# ─────────────────────────────────────────
+# SECRET SHARING
+# ─────────────────────────────────────────
+EXPIRY_OPTIONS = {
+    "1h":  1,
+    "24h": 24,
+    "7d":  168,
+    "30d": 720,
+}
+
+class SecretCreate(BaseModel):
+    content: str
+    expiry: str = "24h"  # 1h | 24h | 7d | 30d
+
+@app.post("/secrets")
+def create_secret(body: SecretCreate):
+    if not body.content.strip():
+        raise HTTPException(status_code=400, detail="Le secret ne peut pas être vide")
+    if len(body.content) > 50000:
+        raise HTTPException(status_code=400, detail="Secret trop long (max 50 000 caractères)")
+    if body.expiry not in EXPIRY_OPTIONS:
+        raise HTTPException(status_code=400, detail="Durée invalide")
+
+    secret_id  = str(uuid.uuid4()).replace("-","")[:20]
+    ciphertext = fernet.encrypt(body.content.encode()).decode()
+    hours      = EXPIRY_OPTIONS[body.expiry]
+    expires_at = datetime.utcnow() + timedelta(hours=hours)
+
+    try:
+        conn = get_db()
+        cur  = conn.cursor()
+        cur.execute(
+            "INSERT INTO secrets (id, ciphertext, expires_at) VALUES (%s, %s, %s)",
+            (secret_id, ciphertext, expires_at)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur DB: {str(e)}")
+
+    return {"id": secret_id, "expires_at": expires_at.isoformat()}
+
+@app.get("/secrets/{secret_id}")
+def get_secret(secret_id: str):
+    try:
+        conn = get_db()
+        cur  = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cur.execute("SELECT * FROM secrets WHERE id = %s", (secret_id,))
+        row = cur.fetchone()
+
+        if not row:
+            cur.close(); conn.close()
+            raise HTTPException(status_code=404, detail="Secret introuvable ou déjà consulté")
+
+        if row["viewed"]:
+            cur.close(); conn.close()
+            raise HTTPException(status_code=410, detail="Ce secret a déjà été consulté et détruit")
+
+        if datetime.utcnow() > row["expires_at"]:
+            cur.execute("DELETE FROM secrets WHERE id = %s", (secret_id,))
+            conn.commit(); cur.close(); conn.close()
+            raise HTTPException(status_code=410, detail="Ce secret a expiré")
+
+        # Déchiffrer
+        plaintext = fernet.decrypt(row["ciphertext"].encode()).decode()
+
+        # Marquer comme consulté — sera détruit au prochain nettoyage
+        cur.execute("UPDATE secrets SET viewed = TRUE WHERE id = %s", (secret_id,))
+        conn.commit(); cur.close(); conn.close()
+
+        return {"content": plaintext, "expires_at": row["expires_at"].isoformat()}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+
+@app.delete("/secrets/{secret_id}")
+def delete_secret(secret_id: str):
+    conn = get_db()
+    cur  = conn.cursor()
+    cur.execute("DELETE FROM secrets WHERE id = %s", (secret_id,))
+    conn.commit(); cur.close(); conn.close()
+    return {"deleted": True}
