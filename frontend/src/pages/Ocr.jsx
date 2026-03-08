@@ -119,10 +119,6 @@ export default function Ocr() {
           {error && <div style={{ background:"#fef2f2",border:"1px solid #fecaca",borderRadius:"10px",padding:"10px 14px",color:"#dc2626",fontSize:"12px",marginTop:"10px" }}>⚠️ {error}</div>}
 
           <div style={{ marginTop:"14px" }}>
-            <p style={{ fontSize:"11px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:"6px" }}>Langue</p>
-            <select value={lang} onChange={e=>setLang(e.target.value)} style={{ width:"100%",padding:"10px 12px",borderRadius:"10px",border:"1px solid #e5e7eb",fontSize:"13px",background:"#fff",color:"#111827",outline:"none" }}>
-              {LANGS.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}
-            </select>
           </div>
 
           {status==="loading" && (
