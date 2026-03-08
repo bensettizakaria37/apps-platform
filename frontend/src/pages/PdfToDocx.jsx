@@ -126,7 +126,7 @@ export default function PdfToDocx() {
 
       {/* Header */}
       <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"28px" }}>
-        <div style={{ width:"44px",height:"44px",borderRadius:"12px",background:"#eff6ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"22px" }}>📄</div>
+        <div style={{ width:"44px",height:"44px",borderRadius:"12px",background:"#eff6ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"22px" }}></div>
         <div>
           <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827",margin:0 }}>PDF → DOCX</h2>
           <p style={{ fontSize:"13px",color:"#6b7280",margin:0 }}>Convertissez vos PDFs en documents Word éditables</p>
@@ -149,7 +149,7 @@ export default function PdfToDocx() {
 
           {file && (
             <div style={{ background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:"10px",padding:"12px 16px",display:"flex",alignItems:"center",gap:"10px",marginTop:"14px" }}>
-              <span style={{ fontSize:"18px" }}>📎</span>
+              <span style={{ fontSize:"18px" }}></span>
               <span style={{ flex:1,fontSize:"13px",color:"#1e40af",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{file.name}</span>
               <span style={{ fontSize:"12px",color:"#6b7280",whiteSpace:"nowrap" }}>{formatSize(file.size)}</span>
               <span style={{ cursor:"pointer",color:"#9ca3af",fontSize:"18px",lineHeight:1 }} onClick={reset}>×</span>
@@ -158,7 +158,7 @@ export default function PdfToDocx() {
 
           {error && (
             <div style={{ background:"#fef2f2",border:"1px solid #fecaca",borderRadius:"10px",padding:"12px 16px",color:"#dc2626",fontSize:"13px",marginTop:"12px" }}>
-              ⚠️ {error}
+               {error}
             </div>
           )}
 
@@ -167,7 +167,7 @@ export default function PdfToDocx() {
             background: file ? "linear-gradient(135deg,#1d4ed8,#7c3aed)" : "#e5e7eb",
             color: file ? "#fff" : "#9ca3af"
           }}>
-            📄 Convertir en DOCX
+             Convertir en DOCX
           </button>
         </>
       )}
@@ -181,7 +181,7 @@ export default function PdfToDocx() {
 
           {/* Fichier info */}
           <div style={{ display:"flex",alignItems:"center",gap:"10px",marginBottom:"14px" }}>
-            <span style={{ fontSize:"22px" }}>📎</span>
+            <span style={{ fontSize:"22px" }}></span>
             <div style={{ flex:1 }}>
               <p style={{ fontSize:"14px",fontWeight:"600",color:"#111827",margin:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{file?.name}</p>
               <p style={{ fontSize:"12px",color:"#6b7280",margin:"2px 0 0" }}>{formatSize(file?.size)}</p>
@@ -219,7 +219,7 @@ export default function PdfToDocx() {
             Conversion PDF en WORD en cours...
           </p>
           <p style={{ fontSize:"13px",color:"#6b7280",textAlign:"center",lineHeight:"1.6",margin:"0 0 20px" }}>
-            Ne fermez pas votre navigateur. Merci d'attendre que vos fichiers soient téléchargés et traités ! Cela peut prendre plusieurs minutes. 🙂
+            Ne fermez pas votre navigateur. Merci d'attendre que vos fichiers soient téléchargés et traités 
           </p>
 
           {/* Barre conversion */}
@@ -232,9 +232,9 @@ export default function PdfToDocx() {
           </div>
 
           <div style={{ display:"flex",alignItems:"center",gap:"8px",background:"#faf5ff",border:"1px solid #e9d5ff",borderRadius:"10px",padding:"12px 16px",marginTop:"16px" }}>
-            <span>💡</span>
+            <span></span>
             <p style={{ fontSize:"12px",color:"#7c3aed",margin:0 }}>
-              Le traitement se fait en arrière-plan. Vous pouvez laisser cet onglet ouvert.
+              
             </p>
           </div>
 
@@ -246,7 +246,7 @@ export default function PdfToDocx() {
       {status === "done" && downloadUrl && (
         <div style={s.card}>
           <div style={{ textAlign:"center",marginBottom:"20px" }}>
-            <div style={{ fontSize:"52px",marginBottom:"8px" }}>🎉</div>
+            <div style={{ fontSize:"52px",marginBottom:"8px" }}></div>
             <p style={{ fontSize:"18px",fontWeight:"700",color:"#111827",margin:"0 0 4px" }}>Conversion terminée !</p>
             <p style={{ fontSize:"13px",color:"#6b7280",margin:0 }}>Votre fichier est prêt à télécharger</p>
           </div>
@@ -256,7 +256,7 @@ export default function PdfToDocx() {
             background:"linear-gradient(135deg,#059669,#10b981)",color:"#fff",
             fontSize:"15px",fontWeight:"700",textDecoration:"none",marginBottom:"10px"
           }}>
-            ⬇️ Télécharger {filename}
+             Télécharger {filename}
           </a>
 
           <button onClick={reset} style={{ ...s.btn,background:"#f3f4f6",color:"#374151",border:"1px solid #e5e7eb" }}>
