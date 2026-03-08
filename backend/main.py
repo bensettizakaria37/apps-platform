@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pdf2docx import Converter
@@ -11,22 +11,21 @@ import psycopg2, psycopg2.extras
 import io, os, uuid, time, glob
 from datetime import datetime, timedelta
 from pydantic import BaseModel
-from typing import Optional
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from starlette.requests import Request as StarletteRequest
-
-def get_real_ip(request: StarletteRequest) -> str:
-    cf_ip = request.headers.get("CF-Connecting-IP")
-    x_forwarded = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
-    return cf_ip or x_forwarded or request.client.host
 from slowapi.errors import RateLimitExceeded
+from starlette.requests import Request as StarletteRequest
+import subprocess, threading
 
 app = FastAPI(title="Apps Platform API")
 
 # ─────────────────────────────────────────
 # RATE LIMITING
 # ─────────────────────────────────────────
+def get_real_ip(request: StarletteRequest) -> str:
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    x_forwarded = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+    return cf_ip or x_forwarded or request.client.host
+
 limiter = Limiter(key_func=get_real_ip)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -47,6 +46,36 @@ app.add_middleware(
 # CONFIG
 # ─────────────────────────────────────────
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+
+# ─────────────────────────────────────────
+# JOBS STORE (en mémoire)
+# ─────────────────────────────────────────
+# { job_id: { status, progress, result_path, filename, error, created_at } }
+JOBS = {}
+
+def create_job():
+    job_id = str(uuid.uuid4()).replace("-","")[:16]
+    JOBS[job_id] = {
+        "status": "pending",
+        "progress": 0,
+        "result_path": None,
+        "filename": None,
+        "error": None,
+        "created_at": datetime.utcnow()
+    }
+    return job_id
+
+def cleanup_jobs():
+    """Supprimer les jobs de plus de 1 heure"""
+    now = datetime.utcnow()
+    to_delete = []
+    for job_id, job in JOBS.items():
+        if (now - job["created_at"]).seconds > 3600:
+            if job["result_path"] and os.path.exists(job["result_path"]):
+                os.remove(job["result_path"])
+            to_delete.append(job_id)
+    for job_id in to_delete:
+        del JOBS[job_id]
 
 # ─────────────────────────────────────────
 # DATABASE
@@ -73,7 +102,6 @@ def init_db():
     conn.close()
 
 def cleanup_secrets():
-    """Nettoyer les secrets expirés et déjà consultés"""
     try:
         conn = get_db()
         cur  = conn.cursor()
@@ -88,7 +116,6 @@ def cleanup_secrets():
         print(f"❌ Cleanup error: {e}")
 
 def cleanup_tmp():
-    """Nettoyer les fichiers temporaires de plus de 1 heure"""
     try:
         now = time.time()
         count = 0
@@ -101,21 +128,18 @@ def cleanup_tmp():
     except Exception as e:
         print(f"❌ Tmp cleanup error: {e}")
 
-import threading
-
 def scheduled_cleanup():
-    """Nettoyage automatique toutes les heures"""
     while True:
-        time.sleep(3600)  # 1 heure
+        time.sleep(3600)
         cleanup_secrets()
         cleanup_tmp()
+        cleanup_jobs()
 
 def try_init():
     for i in range(10):
         try:
             init_db()
             print("✅ DB initialized")
-            # Nettoyage au démarrage
             cleanup_secrets()
             cleanup_tmp()
             return
@@ -127,7 +151,6 @@ def try_init():
 threading.Thread(target=try_init, daemon=True).start()
 threading.Thread(target=scheduled_cleanup, daemon=True).start()
 
-# Encryption key
 FERNET_KEY = os.getenv("FERNET_KEY", Fernet.generate_key().decode())
 fernet = Fernet(FERNET_KEY.encode() if isinstance(FERNET_KEY, str) else FERNET_KEY)
 
@@ -135,12 +158,11 @@ fernet = Fernet(FERNET_KEY.encode() if isinstance(FERNET_KEY, str) else FERNET_K
 # HELPERS
 # ─────────────────────────────────────────
 async def check_file_size(file: UploadFile):
-    """Vérifier la taille du fichier avant traitement"""
     contents = await file.read()
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=413,
-            detail=f"Fichier trop volumineux. Maximum: 10MB. Votre fichier: {len(contents)/1024/1024:.1f}MB"
+            detail=f"Fichier trop volumineux. Maximum: 50MB. Votre fichier: {len(contents)/1024/1024:.1f}MB"
         )
     await file.seek(0)
     return contents
@@ -153,44 +175,135 @@ def health():
     return {"status": "ok", "services": ["pdf2docx", "ocr", "secrets"]}
 
 # ─────────────────────────────────────────
-# PDF → DOCX
+# JOBS API
 # ─────────────────────────────────────────
-@app.post("/pdf/convert")
-@limiter.limit("10/minute")
-async def convert_pdf(request: Request, file: UploadFile = File(...)):
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Le fichier doit être un PDF")
-    contents = await check_file_size(file)
+@app.get("/jobs/{job_id}")
+def get_job(job_id: str):
+    if job_id not in JOBS:
+        raise HTTPException(status_code=404, detail="Job introuvable")
+    job = JOBS[job_id]
+    return {
+        "job_id": job_id,
+        "status": job["status"],
+        "progress": job["progress"],
+        "filename": job["filename"],
+        "error": job["error"],
+    }
+
+@app.get("/jobs/{job_id}/download")
+def download_job(job_id: str):
+    if job_id not in JOBS:
+        raise HTTPException(status_code=404, detail="Job introuvable")
+    job = JOBS[job_id]
+    if job["status"] != "done":
+        raise HTTPException(status_code=400, detail="Job pas encore terminé")
+    if not job["result_path"] or not os.path.exists(job["result_path"]):
+        raise HTTPException(status_code=404, detail="Fichier résultat introuvable")
+    ext = os.path.splitext(job["result_path"])[1]
+    media_types = {
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".pdf": "application/pdf",
+        ".txt": "text/plain",
+    }
+    return FileResponse(
+        path=job["result_path"],
+        filename=job["filename"],
+        media_type=media_types.get(ext, "application/octet-stream"),
+        headers={"Access-Control-Allow-Origin": "*"}
+    )
+
+# ─────────────────────────────────────────
+# PDF → DOCX (ASYNC JOB)
+# ─────────────────────────────────────────
+def process_pdf_convert(job_id: str, contents: bytes, original_filename: str):
+    job = JOBS[job_id]
     tmp_id    = str(uuid.uuid4())
     pdf_path  = f"/tmp/{tmp_id}.pdf"
     docx_path = f"/tmp/{tmp_id}.docx"
     try:
+        job["progress"] = 10
         with open(pdf_path, "wb") as f:
             f.write(contents)
+        job["progress"] = 30
         cv = Converter(pdf_path)
+        job["progress"] = 50
         cv.convert(docx_path)
         cv.close()
+        job["progress"] = 90
         if not os.path.exists(docx_path):
-            raise HTTPException(status_code=500, detail="Conversion échouée")
-        output_name = file.filename.replace(".pdf", ".docx")
-        return FileResponse(
-            path=docx_path, filename=output_name,
-            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={"Access-Control-Allow-Origin": "*"}
-        )
-    except HTTPException:
-        raise
+            raise Exception("Conversion échouée")
+        job["result_path"] = docx_path
+        job["filename"]    = original_filename.replace(".pdf", ".docx")
+        job["status"]      = "done"
+        job["progress"]    = 100
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
+        job["status"] = "error"
+        job["error"]  = str(e)
     finally:
         if os.path.exists(pdf_path):
             os.remove(pdf_path)
 
-# ─────────────────────────────────────────
-# OCR
-# ─────────────────────────────────────────
-ALLOWED_OCR = [".jpg",".jpeg",".png",".bmp",".tiff",".tif",".webp",".pdf"]
+@app.post("/pdf/convert")
+@limiter.limit("10/minute")
+async def convert_pdf(request: Request, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Le fichier doit être un PDF")
+    contents = await check_file_size(file)
+    job_id = create_job()
+    background_tasks.add_task(process_pdf_convert, job_id, contents, file.filename)
+    return {"job_id": job_id, "status": "pending"}
 
+# ─────────────────────────────────────────
+# PDF COMPRESS (ASYNC JOB)
+# ─────────────────────────────────────────
+def process_pdf_compress(job_id: str, contents: bytes, original_filename: str):
+    job = JOBS[job_id]
+    tmp_id     = str(uuid.uuid4())
+    input_path = f"/tmp/{tmp_id}_input.pdf"
+    out_path   = f"/tmp/{tmp_id}_compressed.pdf"
+    try:
+        job["progress"] = 10
+        with open(input_path, "wb") as f:
+            f.write(contents)
+        original_size = os.path.getsize(input_path)
+        job["progress"] = 30
+        result = subprocess.run([
+            "gs", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.4",
+            "-dPDFSETTINGS=/ebook", "-dNOPAUSE", "-dQUIET", "-dBATCH",
+            f"-sOutputFile={out_path}", input_path
+        ], capture_output=True, timeout=300)
+        job["progress"] = 90
+        if result.returncode != 0 or not os.path.exists(out_path):
+            raise Exception(f"Ghostscript error: {result.stderr.decode()[:200]}")
+        compressed_size = os.path.getsize(out_path)
+        reduction = round((1 - compressed_size / original_size) * 100, 1)
+        job["result_path"] = out_path
+        job["filename"]    = original_filename.replace(".pdf", "_compressed.pdf")
+        job["status"]      = "done"
+        job["progress"]    = 100
+        job["original_size"]   = original_size
+        job["compressed_size"] = compressed_size
+        job["reduction"]       = reduction
+    except Exception as e:
+        job["status"] = "error"
+        job["error"]  = str(e)
+    finally:
+        if os.path.exists(input_path):
+            os.remove(input_path)
+
+@app.post("/pdf/compress")
+@limiter.limit("10/minute")
+async def compress_pdf(request: Request, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Le fichier doit être un PDF")
+    contents = await check_file_size(file)
+    job_id = create_job()
+    background_tasks.add_task(process_pdf_compress, job_id, contents, file.filename)
+    return {"job_id": job_id, "status": "pending"}
+
+# ─────────────────────────────────────────
+# OCR (ASYNC JOB)
+# ─────────────────────────────────────────
 def do_ocr(file_bytes, filename, lang):
     ext = os.path.splitext(filename.lower())[1]
     if ext == ".pdf":
@@ -206,89 +319,69 @@ def do_ocr(file_bytes, filename, lang):
             img = img.convert("RGB")
         return pytesseract.image_to_string(img, lang=lang).strip()
 
-@app.post("/ocr")
-@limiter.limit("10/minute")
-async def ocr_file(request: Request, file: UploadFile = File(...), lang: str = "fra+eng+ara", output: str = "text"):
-    ext = os.path.splitext(file.filename.lower())[1]
-    if ext not in ALLOWED_OCR:
-        raise HTTPException(status_code=400, detail=f"Format non supporté: {ext}")
-    contents = await check_file_size(file)
+ALLOWED_OCR = [".jpg",".jpeg",".png",".bmp",".tiff",".tif",".webp",".pdf"]
+
+def process_ocr(job_id: str, contents: bytes, filename: str, lang: str, output: str):
+    job = JOBS[job_id]
     try:
-        extracted = do_ocr(contents, file.filename, lang)
+        job["progress"] = 20
+        extracted = do_ocr(contents, filename, lang)
+        job["progress"] = 80
         if not extracted:
             extracted = "Aucun texte détecté."
-        if output == "text":
-            return JSONResponse({"text": extracted, "chars": len(extracted), "words": len(extracted.split())})
         tmp_id = str(uuid.uuid4())
-        if output == "txt":
+        if output == "text":
+            job["result_path"] = None
+            job["text"]        = extracted
+            job["chars"]       = len(extracted)
+            job["words"]       = len(extracted.split())
+        elif output == "txt":
             path = f"/tmp/{tmp_id}.txt"
             with open(path, "w", encoding="utf-8") as f:
                 f.write(extracted)
-            return FileResponse(path, filename=file.filename.rsplit(".",1)[0]+".txt", media_type="text/plain")
-        if output == "docx":
+            job["result_path"] = path
+            job["filename"]    = filename.rsplit(".",1)[0]+".txt"
+        elif output == "docx":
             path = f"/tmp/{tmp_id}.docx"
             doc = DocxDocument()
             doc.add_heading("Texte extrait par OCR", 0)
-            doc.add_paragraph(f"Source : {file.filename}")
+            doc.add_paragraph(f"Source : {filename}")
             doc.add_paragraph(f"Mots : {len(extracted.split())}")
             doc.add_paragraph("")
             for line in extracted.split("\n"):
                 doc.add_paragraph(line)
             doc.save(path)
-            return FileResponse(
-                path, filename=file.filename.rsplit(".",1)[0]+".docx",
-                media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            )
-    except HTTPException:
-        raise
+            job["result_path"] = path
+            job["filename"]    = filename.rsplit(".",1)[0]+".docx"
+        job["status"]   = "done"
+        job["progress"] = 100
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur OCR: {str(e)}")
+        job["status"] = "error"
+        job["error"]  = str(e)
 
-# ─────────────────────────────────────────
-# PDF COMPRESS
-# ─────────────────────────────────────────
-@app.post("/pdf/compress")
+@app.post("/ocr")
 @limiter.limit("10/minute")
-async def compress_pdf(request: Request, file: UploadFile = File(...)):
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Le fichier doit être un PDF")
+async def ocr_file(request: Request, background_tasks: BackgroundTasks, file: UploadFile = File(...), lang: str = "fra+eng+ara", output: str = "text"):
+    ext = os.path.splitext(file.filename.lower())[1]
+    if ext not in ALLOWED_OCR:
+        raise HTTPException(status_code=400, detail=f"Format non supporté: {ext}")
     contents = await check_file_size(file)
-    tmp_id     = str(uuid.uuid4())
-    input_path = f"/tmp/{tmp_id}_input.pdf"
-    out_path   = f"/tmp/{tmp_id}_compressed.pdf"
-    try:
-        with open(input_path, "wb") as f:
-            f.write(contents)
-        original_size = os.path.getsize(input_path)
-        import subprocess
-        result = subprocess.run([
-            "gs", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.4",
-            "-dPDFSETTINGS=/ebook", "-dNOPAUSE", "-dQUIET", "-dBATCH",
-            f"-sOutputFile={out_path}", input_path
-        ], capture_output=True, timeout=60)
-        if result.returncode != 0 or not os.path.exists(out_path):
-            raise HTTPException(status_code=500, detail=f"Compression échouée: {result.stderr.decode()[:200]}")
-        compressed_size = os.path.getsize(out_path)
-        reduction = round((1 - compressed_size / original_size) * 100, 1)
-        output_name = file.filename.replace(".pdf", "_compressed.pdf")
-        return FileResponse(
-            path=out_path, filename=output_name, media_type="application/pdf",
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "X-Original-Size": str(original_size),
-                "X-Compressed-Size": str(compressed_size),
-                "X-Reduction": str(reduction),
-            }
-        )
-    except HTTPException:
-        raise
-    except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=500, detail="Timeout — fichier trop volumineux")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
-    finally:
-        if os.path.exists(input_path):
-            os.remove(input_path)
+    job_id = create_job()
+    background_tasks.add_task(process_ocr, job_id, contents, file.filename, lang, output)
+    return {"job_id": job_id, "status": "pending"}
+
+@app.get("/jobs/{job_id}/ocr-result")
+def get_ocr_result(job_id: str):
+    if job_id not in JOBS:
+        raise HTTPException(status_code=404, detail="Job introuvable")
+    job = JOBS[job_id]
+    if job["status"] != "done":
+        raise HTTPException(status_code=400, detail="Job pas encore terminé")
+    return {
+        "text":  job.get("text", ""),
+        "chars": job.get("chars", 0),
+        "words": job.get("words", 0),
+    }
 
 # ─────────────────────────────────────────
 # SECRET SHARING

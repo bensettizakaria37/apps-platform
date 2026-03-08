@@ -14,70 +14,102 @@ export default function PdfToDocx() {
   const [status, setStatus]       = useState("idle");
   const [progress, setProgress]   = useState(0);
   const [downloadUrl, setDownloadUrl] = useState(null);
-  const [downloadName, setDownloadName] = useState("");
+  const [filename, setFilename]   = useState("");
   const [error, setError]         = useState("");
+  const [jobId, setJobId]         = useState(null);
   const inputRef = useRef();
+  const pollRef  = useRef(null);
 
   const handleFile = (f) => {
-    if (f && f.size > 50 * 1024 * 1024) { setError("Fichier trop volumineux. Maximum 50MB."); return; }
     if (!f?.name.toLowerCase().endsWith(".pdf")) { setError("Veuillez sélectionner un fichier PDF."); return; }
-    setFile(f); setError(""); setStatus("idle"); setDownloadUrl(null);
+    if (f.size > 50 * 1024 * 1024) { setError("Fichier trop volumineux. Maximum 50MB."); return; }
+    setFile(f); setError(""); setStatus("idle"); setDownloadUrl(null); setJobId(null);
+  };
+
+  const pollJob = (jid) => {
+    pollRef.current = setInterval(async () => {
+      try {
+        const res  = await fetch(`${BACKEND}/jobs/${jid}`);
+        const data = await res.json();
+        setProgress(data.progress || 0);
+        if (data.status === "done") {
+          clearInterval(pollRef.current);
+          const dlUrl = `${BACKEND}/jobs/${jid}/download`;
+          setDownloadUrl(dlUrl);
+          setFilename(data.filename || "document.docx");
+          setStatus("done");
+          setProgress(100);
+        } else if (data.status === "error") {
+          clearInterval(pollRef.current);
+          setError(data.error || "Erreur inconnue");
+          setStatus("error");
+        }
+      } catch(e) {
+        clearInterval(pollRef.current);
+        setError("Erreur de connexion");
+        setStatus("error");
+      }
+    }, 2000);
   };
 
   const convert = async () => {
     if (!file) return;
-    setStatus("converting"); setProgress(10); setError("");
-    const interval = setInterval(() => setProgress(p => p < 85 ? p+8 : p), 600);
+    setStatus("uploading"); setProgress(5); setError("");
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch(`${BACKEND}/pdf/convert`, { method:"POST", body:fd });
-      clearInterval(interval); setProgress(100);
+      const res  = await fetch(`${BACKEND}/pdf/convert`, { method:"POST", body:fd });
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
-      const blob = await res.blob();
-      setDownloadUrl(URL.createObjectURL(blob));
-      setDownloadName(file.name.replace(".pdf",".docx"));
-      setStatus("done");
+      const data = await res.json();
+      setJobId(data.job_id);
+      setStatus("processing");
+      setProgress(10);
+      pollJob(data.job_id);
     } catch(e) {
-      clearInterval(interval); setError(e.message); setStatus("error"); setProgress(0);
+      setError(e.message);
+      setStatus("error");
+      setProgress(0);
     }
   };
 
-  const reset = () => { setFile(null); setStatus("idle"); setDownloadUrl(null); setError(""); setProgress(0); };
+  const reset = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    setFile(null); setStatus("idle"); setDownloadUrl(null);
+    setError(""); setProgress(0); setJobId(null);
+  };
+
+  const s = {
+    btn: { width:"100%", padding:"14px", border:"none", borderRadius:"12px", fontSize:"15px", fontWeight:"700", cursor:"pointer", transition:"all 0.2s" }
+  };
+
+  const statusLabel = { uploading:"⬆️ Upload en cours...", processing:"⚙️ Conversion en cours...", done:"✅ Terminé !", error:"❌ Erreur" };
 
   return (
     <div style={{ maxWidth:"520px", margin:"0 auto", padding:"40px 24px" }}>
-      <div style={{ marginBottom:"28px" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"8px" }}>
-          <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#eff6ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}>📄</div>
-          <div>
-            <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>PDF → DOCX</h2>
-            <p style={{ fontSize:"13px",color:"#6b7280" }}>Convertir un PDF en document Word éditable</p>
-          </div>
+      <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"28px" }}>
+        <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#eff6ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}>📄</div>
+        <div>
+          <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>PDF → DOCX</h2>
+          <p style={{ fontSize:"13px",color:"#6b7280" }}>Convertissez vos PDFs en documents Word éditables</p>
         </div>
       </div>
 
-      <div
-        onClick={() => inputRef.current.click()}
+      {/* Drop Zone */}
+      <div onClick={()=>inputRef.current.click()}
         onDragOver={e=>{e.preventDefault();setDrag(true)}}
         onDragLeave={()=>setDrag(false)}
         onDrop={e=>{e.preventDefault();setDrag(false);handleFile(e.dataTransfer.files[0])}}
-        style={{
-          border:`2px dashed ${drag?"#1d4ed8":"#d1d5db"}`,
-          borderRadius:"14px", padding:"40px 24px", textAlign:"center",
-          cursor:"pointer", background: drag?"#eff6ff":"#f9fafb",
-          transition:"all 0.2s"
-        }}
-      >
+        style={{ border:`2px dashed ${drag?"#1d4ed8":"#d1d5db"}`,borderRadius:"14px",padding:"40px 24px",textAlign:"center",cursor:"pointer",background:drag?"#eff6ff":"#f9fafb",transition:"all 0.2s" }}>
         <div style={{ fontSize:"36px",marginBottom:"10px" }}>📂</div>
         <p style={{ color:"#6b7280",fontSize:"14px" }}>Glissez votre PDF ici ou <span style={{ color:"#1d4ed8",textDecoration:"underline" }}>parcourez</span></p>
+        <p style={{ color:"#9ca3af",fontSize:"12px",marginTop:"4px" }}>Maximum 50MB</p>
         <input ref={inputRef} type="file" accept=".pdf" style={{ display:"none" }} onChange={e=>handleFile(e.target.files[0])} />
       </div>
 
       {file && (
-        <div style={{ background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:"10px",padding:"12px 16px",display:"flex",alignItems:"center",gap:"10px",marginTop:"14px" }}>
+        <div style={{ background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:"10px",padding:"12px 16px",display:"flex",alignItems:"center",gap:"10px",marginTop:"14px" }}>
           <span>📎</span>
-          <span style={{ flex:1,fontSize:"13px",color:"#0369a1",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{file.name}</span>
+          <span style={{ flex:1,fontSize:"13px",color:"#1e40af",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{file.name}</span>
           <span style={{ fontSize:"12px",color:"#9ca3af" }}>{formatSize(file.size)}</span>
           <span style={{ cursor:"pointer",color:"#9ca3af",fontSize:"16px" }} onClick={reset}>×</span>
         </div>
@@ -85,41 +117,47 @@ export default function PdfToDocx() {
 
       {error && <div style={{ background:"#fef2f2",border:"1px solid #fecaca",borderRadius:"10px",padding:"12px 16px",color:"#dc2626",fontSize:"13px",marginTop:"12px" }}>⚠️ {error}</div>}
 
-      {status==="converting" && (
+      {/* Progress */}
+      {(status==="uploading"||status==="processing") && (
         <div style={{ marginTop:"16px" }}>
           <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px",color:"#6b7280",marginBottom:"6px" }}>
-            <span>Conversion en cours...</span><span>{progress}%</span>
+            <span>{statusLabel[status]}</span>
+            <span>{progress}%</span>
           </div>
-          <div style={{ background:"#e5e7eb",borderRadius:"6px",height:"6px",overflow:"hidden" }}>
-            <div style={{ height:"100%",background:"linear-gradient(90deg,#1d4ed8,#7c3aed)",borderRadius:"6px",width:progress+"%",transition:"width 0.4s" }} />
+          <div style={{ background:"#e5e7eb",borderRadius:"6px",height:"8px",overflow:"hidden" }}>
+            <div style={{ height:"100%",background:"linear-gradient(90deg,#1d4ed8,#7c3aed)",borderRadius:"6px",width:progress+"%",transition:"width 0.5s" }} />
           </div>
+          {status==="processing" && (
+            <p style={{ fontSize:"11px",color:"#9ca3af",marginTop:"6px",textAlign:"center" }}>
+              Le traitement continue en arrière-plan — vous pouvez attendre ici ⏳
+            </p>
+          )}
         </div>
       )}
 
-      {status !== "done" && (
-        <button onClick={convert} disabled={!file||status==="converting"} style={{
-          width:"100%",marginTop:"16px",padding:"14px",border:"none",borderRadius:"12px",
-          background:"linear-gradient(135deg,#1d4ed8,#7c3aed)",color:"#fff",
-          fontSize:"15px",fontWeight:"700",cursor:!file||status==="converting"?"not-allowed":"pointer",
-          opacity:!file||status==="converting"?0.5:1, transition:"all 0.2s"
+      {status!=="done" && (
+        <button onClick={convert} disabled={!file||status==="uploading"||status==="processing"} style={{
+          ...s.btn, marginTop:"16px",
+          background:"linear-gradient(135deg,#1d4ed8,#7c3aed)", color:"#fff",
+          opacity:!file||status==="uploading"||status==="processing"?0.5:1
         }}>
-          {status==="converting" ? "⏳ Conversion..." : "⚡ Convertir en DOCX"}
+          {status==="uploading"?"⬆️ Upload...":status==="processing"?"⚙️ Conversion...":"📄 Convertir en DOCX"}
         </button>
       )}
 
-      {status==="done" && (
+      {status==="done" && downloadUrl && (
         <>
-          <div style={{ textAlign:"center",padding:"20px 0" }}>
-            <div style={{ fontSize:"48px",marginBottom:"8px" }}>✅</div>
-            <p style={{ color:"#6b7280",fontSize:"14px" }}>Votre fichier est prêt !</p>
+          <div style={{ textAlign:"center",marginTop:"20px",marginBottom:"16px" }}>
+            <div style={{ fontSize:"40px",marginBottom:"8px" }}>🎉</div>
+            <p style={{ fontWeight:"700",color:"#111827" }}>Conversion terminée !</p>
           </div>
-          <a href={downloadUrl} download={downloadName} style={{
+          <a href={downloadUrl} download={filename} style={{
             display:"block",textAlign:"center",padding:"14px",borderRadius:"12px",
             background:"linear-gradient(135deg,#059669,#10b981)",color:"#fff",
-            fontSize:"15px",fontWeight:"700",textDecoration:"none"
-          }}>⬇️ Télécharger {downloadName}</a>
-          <button onClick={reset} style={{ width:"100%",marginTop:"10px",padding:"10px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#fff",color:"#6b7280",fontSize:"13px",cursor:"pointer" }}>
-            Convertir un autre fichier
+            fontSize:"15px",fontWeight:"700",textDecoration:"none",marginBottom:"10px"
+          }}>⬇️ Télécharger {filename}</a>
+          <button onClick={reset} style={{ ...s.btn,background:"#f3f4f6",color:"#374151" }}>
+            Convertir un autre PDF
           </button>
         </>
       )}
