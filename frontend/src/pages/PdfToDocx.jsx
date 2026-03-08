@@ -141,7 +141,7 @@ export default function PdfToDocx() {
             onDragLeave={()=>setDrag(false)}
             onDrop={e=>{e.preventDefault();setDrag(false);handleFile(e.dataTransfer.files[0])}}
             style={{ border:`2px dashed ${drag?"#1d4ed8":"#d1d5db"}`,borderRadius:"14px",padding:"48px 24px",textAlign:"center",cursor:"pointer",background:drag?"#eff6ff":"#f9fafb",transition:"all 0.2s" }}>
-            <div style={{ fontSize:"40px",marginBottom:"12px" }}>📂</div>
+            <div style={{ fontSize:"40px",marginBottom:"12px" }}></div>
             <p style={{ color:"#374151",fontSize:"15px",fontWeight:"600" }}>Glissez votre PDF ici</p>
             <p style={{ color:"#9ca3af",fontSize:"12px",margin:"4px 0 0" }}>ou <span style={{ color:"#1d4ed8",textDecoration:"underline" }}>parcourez vos fichiers</span> — Maximum 50MB</p>
             <input ref={inputRef} type="file" accept=".pdf" style={{ display:"none" }} onChange={e=>handleFile(e.target.files[0])} />
@@ -212,7 +212,7 @@ export default function PdfToDocx() {
         <div style={s.card}>
           {/* Spinner animé */}
           <div style={{ textAlign:"center",marginBottom:"20px" }}>
-            <div style={{ fontSize:"48px",animation:"spin 2s linear infinite",display:"inline-block" }}>⚙️</div>
+            <div style={{ fontSize:"48px",animation:"spin 2s linear infinite",display:"inline-block" }}></div>
           </div>
 
           <p style={{ fontSize:"16px",fontWeight:"700",color:"#111827",textAlign:"center",margin:"0 0 8px" }}>
