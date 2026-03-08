@@ -14,6 +14,12 @@ from pydantic import BaseModel
 from typing import Optional
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
+from starlette.requests import Request as StarletteRequest
+
+def get_real_ip(request: StarletteRequest) -> str:
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    x_forwarded = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+    return cf_ip or x_forwarded or request.client.host
 from slowapi.errors import RateLimitExceeded
 
 app = FastAPI(title="Apps Platform API")
@@ -21,7 +27,7 @@ app = FastAPI(title="Apps Platform API")
 # ─────────────────────────────────────────
 # RATE LIMITING
 # ─────────────────────────────────────────
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=get_real_ip)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
