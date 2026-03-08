@@ -44,7 +44,7 @@ export default function Ocr() {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch(`${BACKEND}/ocr?lang=${lang}&output=text`, { method:"POST", body:fd });
+      const res = await fetch(`${BACKEND}/ocr?lang=${encodeURIComponent(lang)}&output=text`, { method:"POST", body:fd });
       clearInterval(interval); setProgress(100);
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
       const data = await res.json();
@@ -57,7 +57,7 @@ export default function Ocr() {
   const download = async (fmt) => {
     const fd = new FormData();
     fd.append("file", file);
-    const res = await fetch(`${BACKEND}/ocr?lang=${lang}&output=${fmt}`, { method:"POST", body:fd });
+    const res = await fetch(`${BACKEND}/ocr?lang=${encodeURIComponent(lang)}&output=${fmt}`, { method:"POST", body:fd });
     const blob = await res.blob();
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
