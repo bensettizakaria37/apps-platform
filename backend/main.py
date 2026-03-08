@@ -18,6 +18,9 @@ import subprocess, threading
 
 app = FastAPI(title="Apps Platform API")
 
+from prometheus_fastapi_instrumentator import Instrumentator
+Instrumentator().instrument(app).expose(app)
+
 # ─────────────────────────────────────────
 # RATE LIMITING
 # ─────────────────────────────────────────
