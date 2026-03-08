@@ -30,6 +30,7 @@ export default function Ocr() {
   const ALLOWED = [".jpg",".jpeg",".png",".bmp",".tiff",".tif",".webp",".pdf"];
 
   const handleFile = (f) => {
+    if (f && f.size > 50 * 1024 * 1024) { setError("Fichier trop volumineux. Maximum 50MB."); return; }
     if (!f) return;
     const ext = "."+f.name.split(".").pop().toLowerCase();
     if (!ALLOWED.includes(ext)) { setError("Format non supporté."); return; }

@@ -18,6 +18,7 @@ export default function CompressPdf() {
   const inputRef = useRef();
 
   const handleFile = (f) => {
+    if (f && f.size > 50 * 1024 * 1024) { setError("Fichier trop volumineux. Maximum 50MB."); return; }
     if (!f?.name.toLowerCase().endsWith(".pdf")) { setError("Veuillez sélectionner un fichier PDF."); return; }
     setFile(f); setError(""); setStatus("idle"); setResult(null);
   };
