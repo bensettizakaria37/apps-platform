@@ -457,3 +457,8 @@ async def delete_secret(secret_id: str):
     cur.execute("DELETE FROM secrets WHERE id = %s", (secret_id,))
     conn.commit(); cur.close(); conn.close()
     return {"deleted": True}
+
+# FastAPI App Info for Grafana dashboard
+from prometheus_client import Info
+app_info = Info("fastapi_app", "FastAPI Application Info")
+app_info.info({"app_name": "apps-platform", "version": "1.0.0"})
