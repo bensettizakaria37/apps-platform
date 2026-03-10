@@ -32,7 +32,7 @@ jobs:
           python3 -m pytest tests/ -v --tb=short
         env:
           DATABASE_URL: ""
-          FERNET_KEY: "dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXQ="
+          FERNET_KEY: "MYzePYVJA1zqPQxRMvhYbSxlJ-QbWsae2zGkg6yJJX0="
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
