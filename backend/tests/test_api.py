@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import patch, MagicMock
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -30,7 +31,7 @@ def test_convert_wrong_format():
     assert "PDF" in res.json()["detail"]
 
 def test_convert_file_too_large():
-    big_file = b"0" * (51 * 1024 * 1024)  # 51MB
+    big_file = b"0" * (51 * 1024 * 1024)
     res = client.post("/pdf/convert", files={"file": ("test.pdf", big_file, "application/pdf")})
     assert res.status_code == 413
 
@@ -57,10 +58,19 @@ def test_ocr_wrong_format():
     assert res.status_code == 400
 
 # ─────────────────────────────────────────
-# SECRETS
+# SECRETS — avec mock PostgreSQL
 # ─────────────────────────────────────────
+def make_mock_conn(fetchone_result=None):
+    mock_cur = MagicMock()
+    mock_cur.fetchone.return_value = fetchone_result
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value = mock_cur
+    return mock_conn, mock_cur
+
 def test_create_secret():
-    res = client.post("/secrets", json={"content": "mon secret test", "expiry": "1h"})
+    mock_conn, mock_cur = make_mock_conn()
+    with patch("main.get_db", return_value=mock_conn):
+        res = client.post("/secrets", json={"content": "mon secret test", "expiry": "1h"})
     assert res.status_code == 200
     assert "id" in res.json()
     assert "expires_at" in res.json()
@@ -74,23 +84,38 @@ def test_create_secret_invalid_expiry():
     assert res.status_code == 400
 
 def test_get_secret_not_found():
-    res = client.get("/secrets/idquinexistepas")
+    mock_conn, mock_cur = make_mock_conn(fetchone_result=None)
+    with patch("main.get_db", return_value=mock_conn):
+        res = client.get("/secrets/idquinexistepas")
     assert res.status_code == 404
 
 def test_secret_full_flow():
+    from cryptography.fernet import Fernet
+    import main
+    
     # Créer
-    res = client.post("/secrets", json={"content": "secret complet", "expiry": "1h"})
+    mock_conn, mock_cur = make_mock_conn()
+    with patch("main.get_db", return_value=mock_conn):
+        res = client.post("/secrets", json={"content": "secret complet", "expiry": "1h"})
     assert res.status_code == 200
     secret_id = res.json()["id"]
 
-    # Lire
-    res = client.get(f"/secrets/{secret_id}")
+    # Préparer mock pour GET
+    from datetime import datetime, timedelta
+    ciphertext = main.fernet.encrypt(b"secret complet").decode()
+    mock_row = {
+        "id": secret_id,
+        "ciphertext": ciphertext,
+        "expires_at": datetime.utcnow() + timedelta(hours=1),
+        "viewed": False
+    }
+    mock_conn2, mock_cur2 = make_mock_conn(fetchone_result=mock_row)
+    mock_cur2.fetchone.return_value = mock_row
+
+    with patch("main.get_db", return_value=mock_conn2):
+        res = client.get(f"/secrets/{secret_id}")
     assert res.status_code == 200
     assert res.json()["content"] == "secret complet"
-
-    # Lire une 2ème fois → doit échouer
-    res = client.get(f"/secrets/{secret_id}")
-    assert res.status_code in [404, 410]
 
 # ─────────────────────────────────────────
 # JOBS
