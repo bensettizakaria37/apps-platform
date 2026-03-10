@@ -5,10 +5,6 @@ on:
     branches: [ main ]
 
 jobs:
-
-  # ─────────────────────────────────────────
-  # JOB 1 — Tests
-  # ─────────────────────────────────────────
   test:
     name: Tests
     runs-on: ubuntu-latest
@@ -25,10 +21,21 @@ jobs:
       - name: Install dependencies
         run: |
           pip install fastapi uvicorn python-multipart \
-                      cryptography psycopg2-binary slowapi
+                      cryptography psycopg2-binary slowapi \
+                      pytest httpx pytest-asyncio \
+                      prometheus-fastapi-instrumentator \
+                      prometheus-client
 
       - name: Check syntax Python
         run: python -m py_compile backend/main.py && echo "✅ Python OK"
+
+      - name: Run pytest
+        run: |
+          cd backend
+          python -m pytest tests/ -v --tb=short
+        env:
+          DATABASE_URL: ""
+          FERNET_KEY: "dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXQ="
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -41,9 +48,6 @@ jobs:
       - name: Build frontend
         run: cd frontend && npm run build && echo "✅ Build OK"
 
-  # ─────────────────────────────────────────
-  # JOB 2 — Deploy (seulement si tests OK)
-  # ─────────────────────────────────────────
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
