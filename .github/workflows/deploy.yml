@@ -18,21 +18,18 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
-          pip install fastapi uvicorn python-multipart \
-                      cryptography psycopg2-binary slowapi \
-                      pytest httpx pytest-asyncio \
-                      prometheus-fastapi-instrumentator \
-                      prometheus-client
+          sudo apt-get update -q
+          sudo apt-get install -y tesseract-ocr poppler-utils ghostscript
 
-      - name: Check syntax Python
-        run: python -m py_compile backend/main.py && echo "✅ Python OK"
+      - name: Install Python dependencies
+        run: pip install -r backend/requirements.txt
 
       - name: Run pytest
         run: |
           cd backend
-          python -m pytest tests/ -v --tb=short
+          python3 -m pytest tests/ -v --tb=short
         env:
           DATABASE_URL: ""
           FERNET_KEY: "dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXQ="
