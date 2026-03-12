@@ -514,3 +514,37 @@ def ssl_check(host: str):
         raise HTTPException(status_code=400, detail="Timeout — hôte inaccessible")
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ── Who.is Domain Lookup ─────────────────────────────────────────────────────
+import whois as whois_lib
+
+@app.get("/whois")
+def whois_lookup(domain: str):
+    domain = domain.strip().lower().replace("https://","").replace("http://","").split("/")[0]
+    if not domain:
+        raise HTTPException(status_code=400, detail="Invalid domain")
+    try:
+        w = whois_lib.whois(domain)
+        def fmt_date(d):
+            if isinstance(d, list): d = d[0]
+            return d.strftime("%d/%m/%Y") if d else None
+        def fmt_list(l):
+            if not l: return []
+            if isinstance(l, str): return [l]
+            return list(set(l))
+        return {
+            "domain":       domain,
+            "registrar":    w.registrar,
+            "creation":     fmt_date(w.creation_date),
+            "expiration":   fmt_date(w.expiration_date),
+            "updated":      fmt_date(w.updated_date),
+            "name_servers": fmt_list(w.name_servers),
+            "status":       fmt_list(w.status),
+            "emails":       fmt_list(w.emails),
+            "org":          w.org,
+            "country":      w.country,
+            "dnssec":       str(w.dnssec) if w.dnssec else "unsigned",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
