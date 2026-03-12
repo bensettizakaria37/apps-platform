@@ -1,9 +1,9 @@
 const apps = [
-  { id:"pdf",        icon:"📄", title:"PDF vers DOCX",          desc:"Convertissez vos PDFs en documents Word éditables en un clic.",                   color:"#1d4ed8", bg:"#eff6ff", badge:"Disponible" },
-  { id:"ocr",        icon:"🖼️", title:"OCR — Image vers Texte",  desc:"Extrayez le texte de n'importe quelle image ou PDF scanné. FR, EN, AR.",          color:"#7c3aed", bg:"#f5f3ff", badge:"Disponible" },
-  { id:"secret",     icon:"🔐", title:"Secret Sharing",          desc:"Partagez des mots de passe et secrets via un lien unique qui s'autodétruit.",     color:"#d97706", bg:"#fffbeb", badge:"Disponible" },
-  { id:"compress",   icon:"🗜️", title:"Compresser PDF",          desc:"Réduisez la taille de vos PDFs sans perte de qualité visible.",                   color:"#059669", bg:"#f0fdf4", badge:"Disponible" },
-  { id:"duplicates", icon:"⚡", title:"Supprimer les doublons",  desc:"Supprimez les lignes dupliquées de n'importe quel texte instantanément.",         color:"#0d9488", bg:"#f0fdfa", badge:"Disponible" },
+  { id:"pdf",        icon:"📄", title:"PDF vers DOCX",          desc:"Convertissez vos PDFs en documents Word éditables en un clic.",                   color:"#1d4ed8", bg:"#eff6ff" },
+  { id:"ocr",        icon:"🖼️", title:"OCR — Image vers Texte",  desc:"Extrayez le texte de n'importe quelle image ou PDF scanné. FR, EN, AR.",          color:"#7c3aed", bg:"#f5f3ff" },
+  { id:"secret",     icon:"🔐", title:"Secret Sharing",          desc:"Partagez des mots de passe et secrets via un lien unique qui s'autodétruit.",     color:"#d97706", bg:"#fffbeb" },
+  { id:"compress",   icon:"🗜️", title:"Compresser PDF",          desc:"Réduisez la taille de vos PDFs sans perte de qualité visible.",                   color:"#059669", bg:"#f0fdf4" },
+  { id:"duplicates", icon:"⚡", title:"Supprimer les doublons",  desc:"Supprimez les lignes dupliquées de n'importe quel texte instantanément.",         color:"#0d9488", bg:"#f0fdfa" },
 ];
 
 export default function Home({ setPage }) {
@@ -20,17 +20,14 @@ export default function Home({ setPage }) {
       <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:"20px" }}>
         {apps.map(app=>(
           <div key={app.id}
-            onClick={()=>app.badge==="Disponible" && setPage(app.id)}
-            style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"16px",padding:"28px 24px",cursor:app.badge==="Disponible"?"pointer":"default",transition:"all 0.2s",opacity:app.badge==="Bientôt"?0.6:1,boxShadow:"0 1px 3px rgba(0,0,0,0.05)" }}
-            onMouseEnter={e=>{ if(app.badge==="Disponible"){e.currentTarget.style.boxShadow="0 8px 24px rgba(0,0,0,0.1)";e.currentTarget.style.transform="translateY(-3px)";}}}
+            onClick={()=>setPage(app.id)}
+            style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"16px",padding:"28px 24px",cursor:"pointer",transition:"all 0.2s",boxShadow:"0 1px 3px rgba(0,0,0,0.05)" }}
+            onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 8px 24px rgba(0,0,0,0.1)";e.currentTarget.style.transform="translateY(-3px)";}}
             onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 1px 3px rgba(0,0,0,0.05)";e.currentTarget.style.transform="translateY(0)";}}>
             <div style={{ width:"48px",height:"48px",borderRadius:"12px",background:app.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"24px",marginBottom:"16px" }}>{app.icon}</div>
-            <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"8px" }}>
-              <h3 style={{ fontSize:"15px",fontWeight:"700",color:"#111827" }}>{app.title}</h3>
-              <span style={{ fontSize:"10px",fontWeight:"600",padding:"2px 8px",borderRadius:"10px",background:app.badge==="Disponible"?"#dcfce7":"#f3f4f6",color:app.badge==="Disponible"?"#15803d":"#9ca3af" }}>{app.badge}</span>
-            </div>
+            <h3 style={{ fontSize:"15px",fontWeight:"700",color:"#111827",marginBottom:"8px" }}>{app.title}</h3>
             <p style={{ fontSize:"13px",color:"#6b7280",lineHeight:"1.6" }}>{app.desc}</p>
-            {app.badge==="Disponible" && <div style={{ marginTop:"16px",color:app.color,fontSize:"13px",fontWeight:"600" }}>Ouvrir →</div>}
+            <div style={{ marginTop:"16px",color:app.color,fontSize:"13px",fontWeight:"600" }}>Ouvrir →</div>
           </div>
         ))}
       </div>
