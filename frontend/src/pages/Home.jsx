@@ -1,22 +1,22 @@
 const apps = [
-  { id:"pdf",    icon:"📄", title:"PDF → DOCX",         desc:"Convertissez vos PDFs en documents Word éditables en un clic.",                      color:"#1d4ed8", bg:"#eff6ff", badge:"Disponible" },
-  { id:"ocr",    icon:"🖼️", title:"OCR — Image → Texte", desc:"Extrayez le texte de n'importe quelle image ou PDF scanné. FR, EN, AR.",             color:"#7c3aed", bg:"#f5f3ff", badge:"Disponible" },
-  { id:"secret", icon:"🔐", title:"Secret Sharing",      desc:"Partagez des mots de passe et secrets via un lien unique qui s'autodétruit.",        color:"#d97706", bg:"#fffbeb", badge:"Disponible" },
-  { id:"compress", icon:"🗜️", title:"Compresser PDF", desc:"Réduisez la taille de vos PDFs sans perte de qualité visible.", color:"#059669", bg:"#f0fdf4", badge:"Disponible" },
+  { id:"pdf",        icon:"📄", title:"PDF vers DOCX",          desc:"Convertissez vos PDFs en documents Word éditables en un clic.",                   color:"#1d4ed8", bg:"#eff6ff", badge:"Disponible" },
+  { id:"ocr",        icon:"🖼️", title:"OCR — Image vers Texte",  desc:"Extrayez le texte de n'importe quelle image ou PDF scanné. FR, EN, AR.",          color:"#7c3aed", bg:"#f5f3ff", badge:"Disponible" },
+  { id:"secret",     icon:"🔐", title:"Secret Sharing",          desc:"Partagez des mots de passe et secrets via un lien unique qui s'autodétruit.",     color:"#d97706", bg:"#fffbeb", badge:"Disponible" },
+  { id:"compress",   icon:"🗜️", title:"Compresser PDF",          desc:"Réduisez la taille de vos PDFs sans perte de qualité visible.",                   color:"#059669", bg:"#f0fdf4", badge:"Disponible" },
+  { id:"duplicates", icon:"⚡", title:"Supprimer les doublons",  desc:"Supprimez les lignes dupliquées de n'importe quel texte instantanément.",         color:"#0d9488", bg:"#f0fdfa", badge:"Disponible" },
 ];
 
 export default function Home({ setPage }) {
   return (
     <div style={{ maxWidth:"1000px", margin:"0 auto", padding:"48px 24px" }}>
       <div style={{ textAlign:"center", marginBottom:"56px" }}>
-        <div style={{ display:"inline-block",background:"#eff6ff",color:"#1d4ed8",fontSize:"12px",fontWeight:"600",letterSpacing:"0.1em",textTransform:"uppercase",padding:"4px 14px",borderRadius:"20px",marginBottom:"16px" }}>✦ Plateforme d'outils</div>
+        <div style={{ display:"inline-block",background:"#eff6ff",color:"#1d4ed8",fontSize:"12px",fontWeight:"600",letterSpacing:"0.1em",textTransform:"uppercase",padding:"4px 14px",borderRadius:"20px",marginBottom:"16px" }}>Plateforme d'outils</div>
         <h1 style={{ fontSize:"42px",fontWeight:"800",color:"#111827",letterSpacing:"-1.5px",marginBottom:"14px",lineHeight:1.1 }}>
           Vos outils de productivité,<br/>
           <span style={{ background:"linear-gradient(135deg,#1d4ed8,#7c3aed)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>au même endroit.</span>
         </h1>
         <p style={{ color:"#6b7280",fontSize:"16px",maxWidth:"480px",margin:"0 auto" }}>Des outils simples, rapides et gratuits pour convertir, extraire et transformer vos fichiers.</p>
       </div>
-
       <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:"20px" }}>
         {apps.map(app=>(
           <div key={app.id}
