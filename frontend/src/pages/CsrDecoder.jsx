@@ -16,7 +16,7 @@ export default function CsrDecoder() {
 
       const subject = {};
       csr.subject.attributes.forEach(a => {
-        const map = { CN:"Common Name", O:"Organisation", OU:"Unité organisationnelle", L:"Ville", ST:"État / Province", C:"Pays", emailAddress:"Email" };
+        const map = { CN:"Common Name", O:"Organisation", OU:"Unité organisationnelle", L:"Ville", ST:"État / Province", C:"Pays", emailAddress:"Email", E:"Email" };
         subject[map[a.shortName] || a.shortName] = a.value;
       });
 
