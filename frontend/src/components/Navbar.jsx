@@ -16,16 +16,16 @@ export default function Navbar({ page, setPage }) {
       </div>
       <div style={{ display:"flex", gap:"4px" }}>
         {[
-          { id:"home",       label:"🏠 Accueil" },
-          { id:"pdf",        label:"📄 PDF vers DOCX" },
-          { id:"ocr",        label:"🖼️ OCR" },
-          { id:"secret",     label:"🔐 Secret" },
-          { id:"compress",   label:"🗜️ Compress PDF" },
-          { id:"duplicates", label:"⚡ Doublons" },
-          { id:"ssl",         label:"🔒 SSL Checker" },
+          { id:"home",        label:"🏠 Home" },
+          { id:"pdf",         label:"📄 PDF to DOCX" },
+          { id:"ocr",         label:"🖼️ OCR" },
+          { id:"compress",    label:"🗜️ Compress PDF" },
+          { id:"duplicates",  label:"⚡ Remove Duplicates" },
+          { id:"removelines", label:"🧹 Remove Lines" },
+          { id:"replacer",    label:"🔁 Text Replacer" },
+          { id:"secret",      label:"🔐 Secret Sharing" },
           { id:"csr",         label:"🔏 CSR Decoder" },
-          { id:"removelines", label:"🧹 Supprimer lignes" },
-          { id:"replacer",   label:"🔁 Text Replacer" },
+          { id:"ssl",         label:"🔒 SSL Checker" },
         ].map(item=>(
           <button key={item.id} onClick={()=>navigate(item.id)} style={{
             padding:"6px 14px", borderRadius:"8px", border:"none",
