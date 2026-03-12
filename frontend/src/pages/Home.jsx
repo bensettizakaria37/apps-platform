@@ -3,6 +3,7 @@ const apps = [
   { id:"ocr",        icon:"🖼️", title:"OCR — Image vers Texte",  desc:"Extrayez le texte de n'importe quelle image ou PDF scanné. FR, EN, AR.",          color:"#7c3aed", bg:"#f5f3ff" },
   { id:"secret",     icon:"🔐", title:"Secret Sharing",          desc:"Partagez des mots de passe et secrets via un lien unique qui s'autodétruit.",     color:"#d97706", bg:"#fffbeb" },
   { id:"compress",   icon:"🗜️", title:"Compresser PDF",          desc:"Réduisez la taille de vos PDFs sans perte de qualité visible.",                   color:"#059669", bg:"#f0fdf4" },
+  { id:"removelines", icon:"🧹", title:"Supprimer lignes",       desc:"Supprimez toutes les lignes contenant un mot-clé ou une expression.", color:"#9333ea", bg:"#fdf4ff" },
   { id:"replacer",  icon:"🔁", title:"Text Replacer",           desc:"Recherchez et remplacez du texte avec support Regex.",                        color:"#ea580c", bg:"#fff7ed" },
   { id:"duplicates", icon:"⚡", title:"Supprimer les doublons",  desc:"Supprimez les lignes dupliquées de n'importe quel texte instantanément.",         color:"#0d9488", bg:"#f0fdfa" },
 ];
