@@ -14,7 +14,7 @@ export default function Home({ setPage }) {
   return (
     <div style={{ maxWidth:"1000px", margin:"0 auto", padding:"48px 24px" }}>
       <div style={{ textAlign:"center", marginBottom:"56px" }}>
-        <div style={{ display:"inline-block",background:"#eff6ff",color:"#1d4ed8",fontSize:"12px",fontWeight:"600",letterSpacing:"0.1em",textTransform:"uppercase",padding:"4px 14px",borderRadius:"20px",marginBottom:"16px" }}>Tools Platform</div>
+        <div style={{ display:"inline-block",background:"#eff6ff",color:"#1d4ed8",fontSize:"12px",fontWeight:"600",letterSpacing:"0.1em",textTransform:"uppercase",padding:"4px 14px",borderRadius:"20px",marginBottom:"16px" }}>FactoryTools</div>
         <h1 style={{ fontSize:"42px",fontWeight:"800",color:"#111827",letterSpacing:"-1.5px",marginBottom:"14px",lineHeight:1.1 }}>
           Your productivity tools,<br/>
           <span style={{ background:"linear-gradient(135deg,#1d4ed8,#7c3aed)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>all in one place.</span>
