@@ -5,6 +5,7 @@ import PdfToDocx from "./pages/PdfToDocx";
 import Ocr from "./pages/Ocr";
 import Secret from "./pages/Secret";
 import CompressPdf from "./pages/CompressPdf";
+import TextReplacer from "./pages/TextReplacer";
 import RemoveDuplicates from "./pages/RemoveDuplicates";
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
       {page==="ocr"        && <Ocr />}
       {page==="secret"     && <Secret />}
       {page==="compress"   && <CompressPdf />}
+      {page==="replacer" && <TextReplacer />}
       {page==="duplicates" && <RemoveDuplicates />}
     </div>
   );

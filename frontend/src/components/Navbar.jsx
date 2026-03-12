@@ -22,6 +22,7 @@ export default function Navbar({ page, setPage }) {
           { id:"secret",     label:"🔐 Secret" },
           { id:"compress",   label:"🗜️ Compress PDF" },
           { id:"duplicates", label:"⚡ Doublons" },
+          { id:"replacer",   label:"🔁 Text Replacer" },
         ].map(item=>(
           <button key={item.id} onClick={()=>navigate(item.id)} style={{
             padding:"6px 14px", borderRadius:"8px", border:"none",
