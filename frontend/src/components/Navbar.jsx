@@ -1,3 +1,5 @@
+import Logo from "./Logo";
+
 export default function Navbar({ page, setPage }) {
   const navigate = (id) => {
     window.history.replaceState({}, "", `/?page=${id}`);
@@ -11,7 +13,7 @@ export default function Navbar({ page, setPage }) {
       boxShadow:"0 1px 3px rgba(0,0,0,0.06)"
     }}>
       <div onClick={()=>navigate("home")} style={{ display:"flex",alignItems:"center",gap:"10px",cursor:"pointer",marginRight:"40px" }}>
-        <div style={{ width:"32px",height:"32px",borderRadius:"8px",background:"linear-gradient(135deg,#1d4ed8,#7c3aed)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:"800",fontSize:"16px" }}>F</div>
+        <Logo size={32} />
         <span style={{ fontWeight:"700",fontSize:"16px",color:"#111827" }}>FactoryTools</span>
       </div>
       <div style={{ display:"flex", gap:"4px" }}>
