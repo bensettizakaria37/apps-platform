@@ -462,3 +462,55 @@ async def delete_secret(secret_id: str):
 from prometheus_client import Info
 app_info = Info("fastapi_app", "FastAPI Application Info")
 app_info.info({"app_name": "apps-platform", "version": "1.0.0"})
+
+
+# ── SSL Checker ──────────────────────────────────────────────────────────────
+import ssl, socket
+from datetime import timezone
+
+@app.get("/ssl-check")
+def ssl_check(host: str):
+    host = host.strip().lower().replace("https://","").replace("http://","").split("/")[0]
+    if not host:
+        raise HTTPException(status_code=400, detail="Hôte invalide")
+    try:
+        ctx = ssl.create_default_context()
+        with socket.create_connection((host, 443), timeout=10) as sock:
+            with ctx.wrap_socket(sock, server_hostname=host) as ssock:
+                cert = ssock.getpeercert()
+                cipher = ssock.cipher()
+                version = ssock.version()
+
+        # Dates
+        not_before = datetime.strptime(cert["notBefore"], "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
+        not_after  = datetime.strptime(cert["notAfter"],  "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
+        now        = datetime.now(timezone.utc)
+        days_left  = (not_after - now).days
+
+        # Subject
+        subject = {k: v for d in cert.get("subject", []) for k, v in d}
+        issuer  = {k: v for d in cert.get("issuer",  []) for k, v in d}
+
+        # SANs
+        sans = [v for t, v in cert.get("subjectAltName", []) if t == "DNS"]
+
+        return {
+            "host":        host,
+            "valid":       days_left > 0,
+            "days_left":   days_left,
+            "not_before":  not_before.strftime("%d/%m/%Y"),
+            "not_after":   not_after.strftime("%d/%m/%Y"),
+            "common_name": subject.get("commonName", ""),
+            "org":         subject.get("organizationName", ""),
+            "issuer_cn":   issuer.get("commonName", ""),
+            "issuer_org":  issuer.get("organizationName", ""),
+            "sans":        sans[:10],
+            "tls_version": version,
+            "cipher":      cipher[0] if cipher else "",
+        }
+    except ssl.SSLCertVerificationError as e:
+        raise HTTPException(status_code=200, detail=f"Certificat invalide : {e.reason}")
+    except socket.timeout:
+        raise HTTPException(status_code=400, detail="Timeout — hôte inaccessible")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

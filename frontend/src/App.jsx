@@ -5,6 +5,7 @@ import PdfToDocx from "./pages/PdfToDocx";
 import Ocr from "./pages/Ocr";
 import Secret from "./pages/Secret";
 import CompressPdf from "./pages/CompressPdf";
+import SslChecker from "./pages/SslChecker";
 import CsrDecoder from "./pages/CsrDecoder";
 import RemoveLines from "./pages/RemoveLines";
 import TextReplacer from "./pages/TextReplacer";
@@ -22,6 +23,7 @@ export default function App() {
       {page==="ocr"        && <Ocr />}
       {page==="secret"     && <Secret />}
       {page==="compress"   && <CompressPdf />}
+      {page==="ssl" && <SslChecker />}
       {page==="csr" && <CsrDecoder />}
       {page==="removelines" && <RemoveLines />}
       {page==="replacer" && <TextReplacer />}
