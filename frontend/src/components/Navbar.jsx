@@ -22,6 +22,7 @@ export default function Navbar({ page, setPage }) {
           { id:"secret",     label:"🔐 Secret" },
           { id:"compress",   label:"🗜️ Compress PDF" },
           { id:"duplicates", label:"⚡ Doublons" },
+          { id:"csr",         label:"🔏 CSR Decoder" },
           { id:"removelines", label:"🧹 Supprimer lignes" },
           { id:"replacer",   label:"🔁 Text Replacer" },
         ].map(item=>(
