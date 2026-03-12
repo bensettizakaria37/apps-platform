@@ -1,13 +1,6 @@
 import { useState, useRef } from "react";
 
 const BACKEND = "https://apps-api.cloudfactory.ma";
-const LANGS = [
-  { value:"fra+eng+ara", label:"🌍 Français + Anglais + Arabe" },
-  { value:"fra",         label:"🇫🇷 Français" },
-  { value:"eng",         label:"🇬🇧 Anglais" },
-  { value:"ara",         label:"🇸🇦 Arabe" },
-  { value:"fra+eng",     label:"🇫🇷 Français + Anglais" },
-];
 
 function formatSize(b) {
   if (b < 1024) return b + " B";
@@ -38,36 +31,53 @@ export default function Ocr() {
     setPreview(ext===".pdf" ? "pdf" : URL.createObjectURL(f));
   };
 
+  const pollJob = async (jobId) => {
+    for (let i = 0; i < 120; i++) {
+      await new Promise(r => setTimeout(r, 1500));
+      const res = await fetch(`${BACKEND}/jobs/${jobId}`);
+      const job = await res.json();
+      setProgress(job.progress || 0);
+      if (job.status === "done") {
+        // Récupérer le résultat OCR
+        const r2 = await fetch(`${BACKEND}/jobs/${jobId}/ocr-result`);
+        const data = await r2.json();
+        setText(data.text || "");
+        setStats({ chars: data.chars || 0, words: data.words || 0 });
+        setStatus("done");
+        return;
+      }
+      if (job.status === "error") {
+        throw new Error(job.error || "Erreur OCR");
+      }
+    }
+    throw new Error("Timeout — réessayez avec un fichier plus petit");
+  };
+
   const runOcr = async () => {
     if (!file) return;
-    setStatus("loading"); setProgress(10); setError("");
-    const interval = setInterval(() => setProgress(p => p<80 ? p+7 : p), 700);
+    setStatus("loading"); setProgress(5); setError("");
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch(`${BACKEND}/ocr?lang=${encodeURIComponent(lang)}&output=text`, { method:"POST", body:fd });
-      clearInterval(interval); setProgress(100);
+      const res = await fetch(`${BACKEND}/ocr?lang=${encodeURIComponent(lang)}`, { method:"POST", body:fd });
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
       const data = await res.json();
-      setText(data.text); setStats({ chars:data.chars, words:data.words }); setStatus("done");
+      await pollJob(data.job_id);
     } catch(e) {
-      clearInterval(interval); setError(e.message); setStatus("error"); setProgress(0);
+      setError(e.message); setStatus("error"); setProgress(0);
     }
-  };
-
-  const download = async (fmt) => {
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch(`${BACKEND}/ocr?lang=${encodeURIComponent(lang)}&output=${fmt}`, { method:"POST", body:fd });
-    const blob = await res.blob();
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = file.name.replace(/\.[^.]+$/, fmt==="txt"?".txt":".docx");
-    a.click();
   };
 
   const copy = () => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(()=>setCopied(false),2000); };
   const reset = () => { setFile(null); setPreview(null); setText(""); setStats(null); setStatus("idle"); setError(""); setProgress(0); };
+
+  const downloadText = () => {
+    const blob = new Blob([text], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = file.name.replace(/\.[^.]+$/, ".txt");
+    a.click();
+  };
 
   return (
     <div style={{ maxWidth:"900px", margin:"0 auto", padding:"40px 24px" }}>
@@ -75,7 +85,7 @@ export default function Ocr() {
         <div style={{ display:"flex",alignItems:"center",gap:"12px",marginBottom:"8px" }}>
           <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#f5f3ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}>🖼️</div>
           <div>
-            <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>OCR — Image → Texte</h2>
+            <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>OCR — Image vers Texte</h2>
             <p style={{ fontSize:"13px",color:"#6b7280" }}>Extrayez le texte de vos images et PDFs scannés</p>
           </div>
         </div>
@@ -105,7 +115,7 @@ export default function Ocr() {
           )}
           {preview === "pdf" && (
             <div style={{ marginTop:"12px",background:"#f9fafb",borderRadius:"10px",padding:"24px",textAlign:"center",color:"#6b7280",fontSize:"13px" }}>
-              📄 PDF sélectionné — toutes les pages seront traitées
+              PDF sélectionné — toutes les pages seront traitées
             </div>
           )}
 
@@ -120,12 +130,20 @@ export default function Ocr() {
           {error && <div style={{ background:"#fef2f2",border:"1px solid #fecaca",borderRadius:"10px",padding:"10px 14px",color:"#dc2626",fontSize:"12px",marginTop:"10px" }}>⚠️ {error}</div>}
 
           <div style={{ marginTop:"14px" }}>
+            <label style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",display:"block",marginBottom:"6px" }}>Langue</label>
+            <select value={lang} onChange={e=>setLang(e.target.value)} style={{ width:"100%",padding:"9px 12px",border:"1px solid #e5e7eb",borderRadius:"10px",fontSize:"13px",background:"#f9fafb" }}>
+              <option value="fra+eng+ara">Français + Anglais + Arabe</option>
+              <option value="fra">Français</option>
+              <option value="eng">Anglais</option>
+              <option value="ara">Arabe</option>
+              <option value="fra+eng">Français + Anglais</option>
+            </select>
           </div>
 
           {status==="loading" && (
             <div style={{ marginTop:"14px" }}>
               <div style={{ display:"flex",justifyContent:"space-between",fontSize:"11px",color:"#6b7280",marginBottom:"6px" }}>
-                <span>Analyse...</span><span>{progress}%</span>
+                <span>Analyse en cours...</span><span>{progress}%</span>
               </div>
               <div style={{ background:"#e5e7eb",borderRadius:"6px",height:"4px",overflow:"hidden" }}>
                 <div style={{ height:"100%",background:"linear-gradient(90deg,#7c3aed,#1d4ed8)",borderRadius:"6px",width:progress+"%",transition:"width 0.4s" }} />
@@ -139,7 +157,7 @@ export default function Ocr() {
             fontSize:"14px",fontWeight:"700",cursor:!file||status==="loading"?"not-allowed":"pointer",
             opacity:!file||status==="loading"?0.5:1
           }}>
-            {status==="loading" ? "⏳ Extraction..." : "🔍 Extraire le texte"}
+            {status==="loading" ? "Extraction en cours..." : "Extraire le texte"}
           </button>
         </div>
 
@@ -163,16 +181,12 @@ export default function Ocr() {
 
           {text && (
             <div style={{ display:"flex",gap:"8px",marginTop:"12px" }}>
-              {[
-                { label: copied?"✅ Copié !":"📋 Copier", action: copy, bg:"#eff6ff", color:"#1d4ed8" },
-                { label:"⬇️ .TXT",  action:()=>download("txt"),  bg:"#f5f3ff", color:"#7c3aed" },
-                { label:"⬇️ .DOCX", action:()=>download("docx"), bg:"#f0fdf4", color:"#059669" },
-              ].map(btn=>(
-                <button key={btn.label} onClick={btn.action} style={{
-                  flex:1,padding:"9px 6px",border:"1px solid #e5e7eb",borderRadius:"10px",
-                  background:btn.bg,color:btn.color,fontSize:"12px",fontWeight:"600",cursor:"pointer"
-                }}>{btn.label}</button>
-              ))}
+              <button onClick={copy} style={{ flex:1,padding:"9px 6px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#eff6ff",color:"#1d4ed8",fontSize:"12px",fontWeight:"600",cursor:"pointer" }}>
+                {copied ? "Copié !" : "Copier"}
+              </button>
+              <button onClick={downloadText} style={{ flex:1,padding:"9px 6px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#f5f3ff",color:"#7c3aed",fontSize:"12px",fontWeight:"600",cursor:"pointer" }}>
+                Télécharger .TXT
+              </button>
             </div>
           )}
         </div>
