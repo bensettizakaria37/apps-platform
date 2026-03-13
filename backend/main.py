@@ -554,7 +554,7 @@ def whois_lookup(domain: str):
 import asyncio
 import httpx
 
-WORKER_URL = "https://bitter-dust-0218.nplusone-enterprise-account.workers.dev"
+WORKER_URL = "https://geopeeker.nplusone-enterprise-account.workers.dev"
 
 REGIONS = [
     { "id":"us-east",    "name":"New York",    "flag":"🇺🇸", "country":"US" },
