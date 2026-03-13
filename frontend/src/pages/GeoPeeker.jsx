@@ -19,19 +19,20 @@ const statusColor = (s) => {
 };
 
 export default function GeoPeeker() {
-  const [url, setUrl]         = useState("");
-  const [results, setResults] = useState([]);
+  const [url, setUrl]             = useState("");
+  const [results, setResults]     = useState([]);
   const [screenshots, setScreenshots] = useState({});
-  const [status, setStatus]   = useState("idle");
-  const [error, setError]     = useState("");
+  const [status, setStatus]       = useState("idle");
+  const [error, setError]         = useState("");
   const [checkedUrl, setCheckedUrl] = useState("");
-  const [loadingShot, setLoadingShot] = useState(false);
+  const [modalImg, setModalImg]   = useState(null);
 
   const check = async () => {
     let u = url.trim();
     if (!u) return;
     if (!u.startsWith("http")) u = "https://" + u;
     setStatus("loading"); setError(""); setResults([]); setScreenshots({});
+
     try {
       // 1. GeoCheck
       const res = await fetch(`${BACKEND}/geopeek?url=${encodeURIComponent(u)}`);
@@ -41,18 +42,22 @@ export default function GeoPeeker() {
       setCheckedUrl(data.url);
       setStatus("done");
 
-      // 2. Screenshot (une seule fois, même site pour toutes les régions)
-      setLoadingShot(true);
-      const sres = await fetch(`${BACKEND}/screenshot?url=${encodeURIComponent(u)}`);
-      const sdata = await sres.json();
-      if (sres.ok && sdata.image) {
-        const shots = {};
-        REGIONS.forEach(r => { shots[r.id] = sdata.image; });
-        setScreenshots(shots);
-      }
-      setLoadingShot(false);
+      // 2. Screenshots par région en parallèle
+      const shotPromises = REGIONS.map(async (r) => {
+        try {
+          const sres = await fetch(`${BACKEND}/screenshot?url=${encodeURIComponent(u)}&location=${r.id}`);
+          const sdata = await sres.json();
+          if (sres.ok && sdata.image) {
+            setScreenshots(prev => ({ ...prev, [r.id]: sdata.image }));
+          }
+        } catch(e) {
+          console.error(`Screenshot failed for ${r.name}:`, e);
+        }
+      });
+      await Promise.all(shotPromises);
+
     } catch(e) {
-      setError(e.message); setStatus("error"); setLoadingShot(false);
+      setError(e.message); setStatus("error");
     }
   };
 
@@ -100,7 +105,7 @@ export default function GeoPeeker() {
         {status==="loading" && (
           <div style={{ marginTop:"12px",display:"flex",alignItems:"center",gap:"10px",color:"#6b7280",fontSize:"13px" }}>
             <div style={{ width:"16px",height:"16px",border:"2px solid #e5e7eb",borderTop:"2px solid #1d4ed8",borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />
-            Checking from 6 locations worldwide...
+            Checking from 6 locations — screenshots loading per region...
           </div>
         )}
 
@@ -135,32 +140,30 @@ export default function GeoPeeker() {
                 <div key={r.region_id} style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"14px",overflow:"hidden" }}>
 
                   {/* Screenshot */}
-                  <div style={{ width:"100%",height:"180px",background:"#f3f4f6",position:"relative",overflow:"hidden" }}>
+                  <div
+                    onClick={() => shot && setModalImg(shot)}
+                    style={{ width:"100%",height:"180px",background:"#f3f4f6",position:"relative",overflow:"hidden",cursor:shot?"zoom-in":"default" }}
+                  >
                     {shot ? (
                       <img src={shot} alt={r.region_name} style={{ width:"100%",height:"100%",objectFit:"cover",objectPosition:"top" }} />
-                    ) : loadingShot ? (
+                    ) : (
                       <div style={{ width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:"8px" }}>
                         <div style={{ width:"20px",height:"20px",border:"2px solid #e5e7eb",borderTop:"2px solid #1d4ed8",borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />
-                        <span style={{ fontSize:"11px",color:"#9ca3af" }}>Loading screenshot...</span>
+                        <span style={{ fontSize:"11px",color:"#9ca3af" }}>Loading...</span>
                       </div>
-                    ) : (
-                      <div style={{ width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",color:"#9ca3af",fontSize:"12px" }}>No screenshot</div>
                     )}
-                    {/* Status badge overlay */}
-                    <div style={{ position:"absolute",top:"8px",right:"8px",fontSize:"11px",fontWeight:"700",padding:"3px 10px",borderRadius:"20px",background:hasError?"#fef2f2":sc.bg,color:hasError?"#dc2626":sc.color,backdropFilter:"blur(4px)" }}>
+                    <div style={{ position:"absolute",top:"8px",right:"8px",fontSize:"11px",fontWeight:"700",padding:"3px 10px",borderRadius:"20px",background:hasError?"#fef2f2":sc.bg,color:hasError?"#dc2626":sc.color }}>
                       {hasError ? "Error" : `${r.status}`}
                     </div>
                   </div>
 
                   {/* Info */}
                   <div style={{ padding:"14px 16px" }}>
-                    <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px" }}>
-                      <div style={{ display:"flex",alignItems:"center",gap:"8px" }}>
-                        <span style={{ fontSize:"20px" }}>{r.region_flag}</span>
-                        <div>
-                          <div style={{ fontSize:"14px",fontWeight:"700",color:"#111827" }}>{r.region_name}</div>
-                          <div style={{ fontSize:"11px",color:"#9ca3af" }}>{r.colo ? `Colo: ${r.colo}` : ""}</div>
-                        </div>
+                    <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px" }}>
+                      <span style={{ fontSize:"20px" }}>{r.region_flag}</span>
+                      <div>
+                        <div style={{ fontSize:"14px",fontWeight:"700",color:"#111827" }}>{r.region_name}</div>
+                        <div style={{ fontSize:"11px",color:"#9ca3af" }}>{r.colo ? `Colo: ${r.colo}` : ""}</div>
                       </div>
                     </div>
 
@@ -189,6 +192,13 @@ export default function GeoPeeker() {
             })}
           </div>
         </>
+      )}
+
+      {/* Modal */}
+      {modalImg && (
+        <div onClick={()=>setModalImg(null)} style={{ position:"fixed",top:0,left:0,width:"100vw",height:"100vh",background:"rgba(0,0,0,0.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out" }}>
+          <img src={modalImg} alt="screenshot" style={{ maxWidth:"90vw",maxHeight:"90vh",borderRadius:"12px",boxShadow:"0 25px 60px rgba(0,0,0,0.5)" }} />
+        </div>
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

@@ -620,3 +620,45 @@ async def take_screenshot(url: str, width: int = 1280, height: int = 800):
             return {"url": url, "image": f"data:image/png;base64,{img_b64}"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ── Screenshot via ScreenshotOne ─────────────────────────────────────────────
+SCREENSHOTONE_ACCESS = "bHHr43ojTl70iw"
+
+@app.get("/screenshot")
+async def take_screenshot(url: str, location: str = "us"):
+    if not url.startswith("http"):
+        url = "https://" + url
+
+    location_map = {
+        "us-east":    "us",
+        "us-west":    "us",
+        "eu-west":    "gb",
+        "eu-central": "de",
+        "ap-east":    "sg",
+        "ap-south":   "jp",
+    }
+    country = location_map.get(location, "us")
+
+    params = {
+        "access_key":    SCREENSHOTONE_ACCESS,
+        "url":           url,
+        "viewport_width": 1280,
+        "viewport_height": 800,
+        "format":        "png",
+        "geolocation_country_code": country,
+        "block_ads":     "true",
+        "block_cookie_banners": "true",
+        "delay":         2,
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            r = await client.get("https://api.screenshotone.com/take", params=params, timeout=30)
+            if r.status_code == 200:
+                img_b64 = base64.b64encode(r.content).decode()
+                return {"url": url, "image": f"data:image/png;base64,{img_b64}", "location": location}
+            else:
+                raise HTTPException(status_code=400, detail=f"Screenshot API error: {r.status_code}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
