@@ -2,15 +2,6 @@ import { useState } from "react";
 
 const BACKEND = "https://apps-api.cloudfactory.ma";
 
-const REGIONS = [
-  { id:"us-east",    name:"New York",    flag:"🇺🇸" },
-  { id:"us-west",    name:"Los Angeles", flag:"🇺🇸" },
-  { id:"eu-west",    name:"London",      flag:"🇬🇧" },
-  { id:"eu-central", name:"Frankfurt",   flag:"🇩🇪" },
-  { id:"ap-east",    name:"Singapore",   flag:"🇸🇬" },
-  { id:"ap-south",   name:"Tokyo",       flag:"🇯🇵" },
-];
-
 const statusColor = (s) => {
   if (!s) return { bg:"#f3f4f6", color:"#6b7280" };
   if (s < 300) return { bg:"#f0fdf4", color:"#15803d" };
@@ -19,49 +10,30 @@ const statusColor = (s) => {
 };
 
 export default function GeoPeeker() {
-  const [url, setUrl]             = useState("");
-  const [results, setResults]     = useState([]);
-  const [screenshots, setScreenshots] = useState({});
-  const [status, setStatus]       = useState("idle");
-  const [error, setError]         = useState("");
+  const [url, setUrl]         = useState("");
+  const [results, setResults] = useState([]);
+  const [status, setStatus]   = useState("idle");
+  const [error, setError]     = useState("");
   const [checkedUrl, setCheckedUrl] = useState("");
-  const [modalImg, setModalImg]   = useState(null);
 
   const check = async () => {
     let u = url.trim();
     if (!u) return;
     if (!u.startsWith("http")) u = "https://" + u;
-    setStatus("loading"); setError(""); setResults([]); setScreenshots({});
-
+    setStatus("loading"); setError(""); setResults([]);
     try {
-      // 1. GeoCheck
       const res = await fetch(`${BACKEND}/geopeek?url=${encodeURIComponent(u)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Server error");
       setResults(data.results);
       setCheckedUrl(data.url);
       setStatus("done");
-
-      // 2. Screenshots par région en parallèle
-      const shotPromises = REGIONS.map(async (r) => {
-        try {
-          const sres = await fetch(`${BACKEND}/screenshot?url=${encodeURIComponent(u)}&location=${r.id}`);
-          const sdata = await sres.json();
-          if (sres.ok && sdata.image) {
-            setScreenshots(prev => ({ ...prev, [r.id]: sdata.image }));
-          }
-        } catch(e) {
-          console.error(`Screenshot failed for ${r.name}:`, e);
-        }
-      });
-      await Promise.all(shotPromises);
-
     } catch(e) {
       setError(e.message); setStatus("error");
     }
   };
 
-  const reset = () => { setUrl(""); setResults([]); setScreenshots({}); setStatus("idle"); setError(""); setCheckedUrl(""); };
+  const reset = () => { setUrl(""); setResults([]); setStatus("idle"); setError(""); setCheckedUrl(""); };
 
   const online  = results.filter(r => r.status && r.status < 400).length;
   const offline = results.filter(r => r.error || (r.status && r.status >= 400)).length;
@@ -75,7 +47,7 @@ export default function GeoPeeker() {
           <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#eff6ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}>🌍</div>
           <div>
             <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>GeoPeeker</h2>
-            <p style={{ fontSize:"13px",color:"#6b7280" }}>See how your website appears from different locations around the world</p>
+            <p style={{ fontSize:"13px",color:"#6b7280" }}>See how your website responds from different locations around the world</p>
           </div>
         </div>
       </div>
@@ -105,7 +77,7 @@ export default function GeoPeeker() {
         {status==="loading" && (
           <div style={{ marginTop:"12px",display:"flex",alignItems:"center",gap:"10px",color:"#6b7280",fontSize:"13px" }}>
             <div style={{ width:"16px",height:"16px",border:"2px solid #e5e7eb",borderTop:"2px solid #1d4ed8",borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />
-            Checking from 6 locations — screenshots loading per region...
+            Checking from 6 locations worldwide...
           </div>
         )}
 
@@ -135,70 +107,62 @@ export default function GeoPeeker() {
             {results.map(r => {
               const sc = statusColor(r.status);
               const hasError = !!r.error;
-              const shot = screenshots[r.region_id];
               return (
-                <div key={r.region_id} style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"14px",overflow:"hidden" }}>
+                <div key={r.region_id} style={{ background:"#fff",border:`1px solid ${hasError||r.status>=400?"#fecaca":"#e5e7eb"}`,borderRadius:"14px",padding:"20px" }}>
 
-                  {/* Screenshot */}
-                  <div
-                    onClick={() => shot && setModalImg(shot)}
-                    style={{ width:"100%",height:"180px",background:"#f3f4f6",position:"relative",overflow:"hidden",cursor:shot?"zoom-in":"default" }}
-                  >
-                    {shot ? (
-                      <img src={shot} alt={r.region_name} style={{ width:"100%",height:"100%",objectFit:"cover",objectPosition:"top" }} />
-                    ) : (
-                      <div style={{ width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:"8px" }}>
-                        <div style={{ width:"20px",height:"20px",border:"2px solid #e5e7eb",borderTop:"2px solid #1d4ed8",borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />
-                        <span style={{ fontSize:"11px",color:"#9ca3af" }}>Loading...</span>
-                      </div>
-                    )}
-                    <div style={{ position:"absolute",top:"8px",right:"8px",fontSize:"11px",fontWeight:"700",padding:"3px 10px",borderRadius:"20px",background:hasError?"#fef2f2":sc.bg,color:hasError?"#dc2626":sc.color }}>
-                      {hasError ? "Error" : `${r.status}`}
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <div style={{ padding:"14px 16px" }}>
-                    <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px" }}>
-                      <span style={{ fontSize:"20px" }}>{r.region_flag}</span>
+                  {/* Region header */}
+                  <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"16px" }}>
+                    <div style={{ display:"flex",alignItems:"center",gap:"10px" }}>
+                      <span style={{ fontSize:"28px" }}>{r.region_flag}</span>
                       <div>
-                        <div style={{ fontSize:"14px",fontWeight:"700",color:"#111827" }}>{r.region_name}</div>
+                        <div style={{ fontSize:"15px",fontWeight:"700",color:"#111827" }}>{r.region_name}</div>
                         <div style={{ fontSize:"11px",color:"#9ca3af" }}>{r.colo ? `Colo: ${r.colo}` : ""}</div>
                       </div>
                     </div>
-
-                    {hasError ? (
-                      <div style={{ fontSize:"12px",color:"#dc2626",background:"#fef2f2",borderRadius:"8px",padding:"8px 12px" }}>{r.error}</div>
-                    ) : (
-                      <div style={{ display:"flex",flexDirection:"column",gap:"5px" }}>
-                        <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px" }}>
-                          <span style={{ color:"#6b7280" }}>Response time</span>
-                          <span style={{ fontWeight:"600",color:r.response_time<500?"#15803d":r.response_time<1500?"#d97706":"#dc2626" }}>{r.response_time}ms</span>
-                        </div>
-                        {r.server && (
-                          <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px" }}>
-                            <span style={{ color:"#6b7280" }}>Server</span>
-                            <span style={{ fontWeight:"600",color:"#111827",fontFamily:"monospace" }}>{r.server}</span>
-                          </div>
-                        )}
-                        <div style={{ marginTop:"4px",background:"#f3f4f6",borderRadius:"4px",height:"3px",overflow:"hidden" }}>
-                          <div style={{ height:"100%",borderRadius:"4px",width:`${Math.min(r.response_time/30,100)}%`,background:r.response_time<500?"#22c55e":r.response_time<1500?"#f59e0b":"#ef4444" }} />
-                        </div>
-                      </div>
-                    )}
+                    <span style={{ fontSize:"12px",fontWeight:"700",padding:"4px 12px",borderRadius:"20px",background:hasError?"#fef2f2":sc.bg,color:hasError?"#dc2626":sc.color }}>
+                      {hasError ? "Error" : `${r.status} ${r.status_text||""}`}
+                    </span>
                   </div>
+
+                  {hasError ? (
+                    <div style={{ fontSize:"12px",color:"#dc2626",background:"#fef2f2",borderRadius:"8px",padding:"10px 12px" }}>{r.error}</div>
+                  ) : (
+                    <div style={{ display:"flex",flexDirection:"column",gap:"8px" }}>
+                      {/* Response time */}
+                      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"13px" }}>
+                        <span style={{ color:"#6b7280" }}>Response time</span>
+                        <span style={{ fontWeight:"700",color:r.response_time<500?"#15803d":r.response_time<1500?"#d97706":"#dc2626" }}>{r.response_time}ms</span>
+                      </div>
+                      {/* Bar */}
+                      <div style={{ background:"#f3f4f6",borderRadius:"6px",height:"6px",overflow:"hidden" }}>
+                        <div style={{ height:"100%",borderRadius:"6px",width:`${Math.min(r.response_time/30,100)}%`,background:r.response_time<500?"#22c55e":r.response_time<1500?"#f59e0b":"#ef4444",transition:"width 0.8s ease" }} />
+                      </div>
+
+                      {r.server && (
+                        <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px",marginTop:"4px" }}>
+                          <span style={{ color:"#6b7280" }}>Server</span>
+                          <span style={{ fontWeight:"600",color:"#111827",fontFamily:"monospace" }}>{r.server}</span>
+                        </div>
+                      )}
+                      {r.content_type && (
+                        <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px" }}>
+                          <span style={{ color:"#6b7280" }}>Content-Type</span>
+                          <span style={{ fontWeight:"600",color:"#111827",fontFamily:"monospace",fontSize:"11px" }}>{r.content_type.split(";")[0]}</span>
+                        </div>
+                      )}
+                      {r.powered_by && (
+                        <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px" }}>
+                          <span style={{ color:"#6b7280" }}>Powered by</span>
+                          <span style={{ fontWeight:"600",color:"#111827",fontFamily:"monospace" }}>{r.powered_by}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         </>
-      )}
-
-      {/* Modal */}
-      {modalImg && (
-        <div onClick={()=>setModalImg(null)} style={{ position:"fixed",top:0,left:0,width:"100vw",height:"100vh",background:"rgba(0,0,0,0.85)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out" }}>
-          <img src={modalImg} alt="screenshot" style={{ maxWidth:"90vw",maxHeight:"90vh",borderRadius:"12px",boxShadow:"0 25px 60px rgba(0,0,0,0.5)" }} />
-        </div>
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
