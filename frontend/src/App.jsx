@@ -6,6 +6,8 @@ import Ocr from "./pages/Ocr";
 import Secret from "./pages/Secret";
 import CompressPdf from "./pages/CompressPdf";
 import SslChecker from "./pages/SslChecker";
+import CertificateDecoder from "./pages/CertificateDecoder";
+import WhoisLookup from "./pages/WhoisLookup";
 import CsrDecoder from "./pages/CsrDecoder";
 import RemoveLines from "./pages/RemoveLines";
 import TextReplacer from "./pages/TextReplacer";
@@ -24,6 +26,8 @@ export default function App() {
       {page==="secret"     && <Secret />}
       {page==="compress"   && <CompressPdf />}
       {page==="ssl" && <SslChecker />}
+      {page==="certdecoder" && <CertificateDecoder />}
+      {page==="whois" && <WhoisLookup />}
       {page==="csr" && <CsrDecoder />}
       {page==="removelines" && <RemoveLines />}
       {page==="replacer" && <TextReplacer />}
