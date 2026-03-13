@@ -595,3 +595,28 @@ async def geopeek(url: str):
         tasks = [fetch_region(client, url, r) for r in REGIONS]
         results = await asyncio.gather(*tasks)
     return {"url": url, "results": list(results)}
+
+
+# ── Screenshot (Playwright) ───────────────────────────────────────────────────
+from playwright.async_api import async_playwright
+import base64
+
+@app.get("/screenshot")
+async def take_screenshot(url: str, width: int = 1280, height: int = 800):
+    if not url.startswith("http"):
+        url = "https://" + url
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox","--disable-setuid-sandbox","--disable-dev-shm-usage"]
+            )
+            page = await browser.new_page(viewport={"width": width, "height": height})
+            await page.goto(url, wait_until="domcontentloaded", timeout=15000)
+            await page.wait_for_timeout(2000)
+            screenshot = await page.screenshot(type="png", full_page=False)
+            await browser.close()
+            img_b64 = base64.b64encode(screenshot).decode()
+            return {"url": url, "image": f"data:image/png;base64,{img_b64}"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

@@ -2,6 +2,15 @@ import { useState } from "react";
 
 const BACKEND = "https://apps-api.cloudfactory.ma";
 
+const REGIONS = [
+  { id:"us-east",    name:"New York",    flag:"🇺🇸" },
+  { id:"us-west",    name:"Los Angeles", flag:"🇺🇸" },
+  { id:"eu-west",    name:"London",      flag:"🇬🇧" },
+  { id:"eu-central", name:"Frankfurt",   flag:"🇩🇪" },
+  { id:"ap-east",    name:"Singapore",   flag:"🇸🇬" },
+  { id:"ap-south",   name:"Tokyo",       flag:"🇯🇵" },
+];
+
 const statusColor = (s) => {
   if (!s) return { bg:"#f3f4f6", color:"#6b7280" };
   if (s < 300) return { bg:"#f0fdf4", color:"#15803d" };
@@ -10,36 +19,50 @@ const statusColor = (s) => {
 };
 
 export default function GeoPeeker() {
-  const [url, setUrl]       = useState("");
+  const [url, setUrl]         = useState("");
   const [results, setResults] = useState([]);
-  const [status, setStatus] = useState("idle");
-  const [error, setError]   = useState("");
+  const [screenshots, setScreenshots] = useState({});
+  const [status, setStatus]   = useState("idle");
+  const [error, setError]     = useState("");
   const [checkedUrl, setCheckedUrl] = useState("");
+  const [loadingShot, setLoadingShot] = useState(false);
 
   const check = async () => {
     let u = url.trim();
     if (!u) return;
     if (!u.startsWith("http")) u = "https://" + u;
-    setStatus("loading"); setError(""); setResults([]);
+    setStatus("loading"); setError(""); setResults([]); setScreenshots({});
     try {
+      // 1. GeoCheck
       const res = await fetch(`${BACKEND}/geopeek?url=${encodeURIComponent(u)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Server error");
       setResults(data.results);
       setCheckedUrl(data.url);
       setStatus("done");
+
+      // 2. Screenshot (une seule fois, même site pour toutes les régions)
+      setLoadingShot(true);
+      const sres = await fetch(`${BACKEND}/screenshot?url=${encodeURIComponent(u)}`);
+      const sdata = await sres.json();
+      if (sres.ok && sdata.image) {
+        const shots = {};
+        REGIONS.forEach(r => { shots[r.id] = sdata.image; });
+        setScreenshots(shots);
+      }
+      setLoadingShot(false);
     } catch(e) {
-      setError(e.message); setStatus("error");
+      setError(e.message); setStatus("error"); setLoadingShot(false);
     }
   };
 
-  const reset = () => { setUrl(""); setResults([]); setStatus("idle"); setError(""); setCheckedUrl(""); };
+  const reset = () => { setUrl(""); setResults([]); setScreenshots({}); setStatus("idle"); setError(""); setCheckedUrl(""); };
 
   const online  = results.filter(r => r.status && r.status < 400).length;
   const offline = results.filter(r => r.error || (r.status && r.status >= 400)).length;
 
   return (
-    <div style={{ maxWidth:"1000px", margin:"0 auto", padding:"40px 24px" }}>
+    <div style={{ maxWidth:"1100px", margin:"0 auto", padding:"40px 24px" }}>
 
       {/* Header */}
       <div style={{ marginBottom:"28px" }}>
@@ -103,53 +126,64 @@ export default function GeoPeeker() {
           </div>
 
           {/* Results grid */}
-          <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:"16px" }}>
+          <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"16px" }}>
             {results.map(r => {
               const sc = statusColor(r.status);
               const hasError = !!r.error;
+              const shot = screenshots[r.region_id];
               return (
-                <div key={r.region_id} style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"14px",padding:"20px" }}>
-                  <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"14px" }}>
-                    <div style={{ display:"flex",alignItems:"center",gap:"8px" }}>
-                      <span style={{ fontSize:"22px" }}>{r.region_flag}</span>
-                      <div>
-                        <div style={{ fontSize:"14px",fontWeight:"700",color:"#111827" }}>{r.region_name}</div>
-                        <div style={{ fontSize:"11px",color:"#9ca3af" }}>{r.colo ? `Colo: ${r.colo}` : ""}</div>
+                <div key={r.region_id} style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"14px",overflow:"hidden" }}>
+
+                  {/* Screenshot */}
+                  <div style={{ width:"100%",height:"180px",background:"#f3f4f6",position:"relative",overflow:"hidden" }}>
+                    {shot ? (
+                      <img src={shot} alt={r.region_name} style={{ width:"100%",height:"100%",objectFit:"cover",objectPosition:"top" }} />
+                    ) : loadingShot ? (
+                      <div style={{ width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:"8px" }}>
+                        <div style={{ width:"20px",height:"20px",border:"2px solid #e5e7eb",borderTop:"2px solid #1d4ed8",borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />
+                        <span style={{ fontSize:"11px",color:"#9ca3af" }}>Loading screenshot...</span>
                       </div>
-                    </div>
-                    {hasError ? (
-                      <span style={{ fontSize:"11px",fontWeight:"700",padding:"3px 10px",borderRadius:"20px",background:"#fef2f2",color:"#dc2626" }}>Error</span>
                     ) : (
-                      <span style={{ fontSize:"12px",fontWeight:"700",padding:"3px 10px",borderRadius:"20px",background:sc.bg,color:sc.color }}>{r.status} {r.status_text}</span>
+                      <div style={{ width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",color:"#9ca3af",fontSize:"12px" }}>No screenshot</div>
                     )}
+                    {/* Status badge overlay */}
+                    <div style={{ position:"absolute",top:"8px",right:"8px",fontSize:"11px",fontWeight:"700",padding:"3px 10px",borderRadius:"20px",background:hasError?"#fef2f2":sc.bg,color:hasError?"#dc2626":sc.color,backdropFilter:"blur(4px)" }}>
+                      {hasError ? "Error" : `${r.status}`}
+                    </div>
                   </div>
 
-                  {hasError ? (
-                    <div style={{ fontSize:"12px",color:"#dc2626",background:"#fef2f2",borderRadius:"8px",padding:"8px 12px" }}>{r.error}</div>
-                  ) : (
-                    <div style={{ display:"flex",flexDirection:"column",gap:"6px" }}>
-                      <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px" }}>
-                        <span style={{ color:"#6b7280" }}>Response time</span>
-                        <span style={{ fontWeight:"600",color: r.response_time < 500 ? "#15803d" : r.response_time < 1500 ? "#d97706" : "#dc2626" }}>{r.response_time}ms</span>
-                      </div>
-                      {r.server && (
-                        <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px" }}>
-                          <span style={{ color:"#6b7280" }}>Server</span>
-                          <span style={{ fontWeight:"600",color:"#111827",fontFamily:"monospace" }}>{r.server}</span>
+                  {/* Info */}
+                  <div style={{ padding:"14px 16px" }}>
+                    <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px" }}>
+                      <div style={{ display:"flex",alignItems:"center",gap:"8px" }}>
+                        <span style={{ fontSize:"20px" }}>{r.region_flag}</span>
+                        <div>
+                          <div style={{ fontSize:"14px",fontWeight:"700",color:"#111827" }}>{r.region_name}</div>
+                          <div style={{ fontSize:"11px",color:"#9ca3af" }}>{r.colo ? `Colo: ${r.colo}` : ""}</div>
                         </div>
-                      )}
-                      {r.powered_by && (
-                        <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px" }}>
-                          <span style={{ color:"#6b7280" }}>Powered by</span>
-                          <span style={{ fontWeight:"600",color:"#111827",fontFamily:"monospace" }}>{r.powered_by}</span>
-                        </div>
-                      )}
-                      {/* Response time bar */}
-                      <div style={{ marginTop:"6px",background:"#f3f4f6",borderRadius:"4px",height:"4px",overflow:"hidden" }}>
-                        <div style={{ height:"100%",borderRadius:"4px",width:`${Math.min(r.response_time/30, 100)}%`,background: r.response_time < 500 ? "#22c55e" : r.response_time < 1500 ? "#f59e0b" : "#ef4444",transition:"width 0.6s" }} />
                       </div>
                     </div>
-                  )}
+
+                    {hasError ? (
+                      <div style={{ fontSize:"12px",color:"#dc2626",background:"#fef2f2",borderRadius:"8px",padding:"8px 12px" }}>{r.error}</div>
+                    ) : (
+                      <div style={{ display:"flex",flexDirection:"column",gap:"5px" }}>
+                        <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px" }}>
+                          <span style={{ color:"#6b7280" }}>Response time</span>
+                          <span style={{ fontWeight:"600",color:r.response_time<500?"#15803d":r.response_time<1500?"#d97706":"#dc2626" }}>{r.response_time}ms</span>
+                        </div>
+                        {r.server && (
+                          <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px" }}>
+                            <span style={{ color:"#6b7280" }}>Server</span>
+                            <span style={{ fontWeight:"600",color:"#111827",fontFamily:"monospace" }}>{r.server}</span>
+                          </div>
+                        )}
+                        <div style={{ marginTop:"4px",background:"#f3f4f6",borderRadius:"4px",height:"3px",overflow:"hidden" }}>
+                          <div style={{ height:"100%",borderRadius:"4px",width:`${Math.min(r.response_time/30,100)}%`,background:r.response_time<500?"#22c55e":r.response_time<1500?"#f59e0b":"#ef4444" }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
