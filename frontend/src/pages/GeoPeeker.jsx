@@ -150,6 +150,9 @@ export default function GeoPeeker() {
                           <span style={{ fontWeight:"600",color:"#111827",fontFamily:"monospace",fontSize:"11px" }}>{r.content_type.split(";")[0]}</span>
                         </div>
                       )}
+                      {r.block_message && (
+                        <div style={{ fontSize:"12px",color:"#dc2626",background:"#fef2f2",borderRadius:"8px",padding:"8px 12px",marginTop:"4px",fontStyle:"italic" }}>⚠️ {r.block_message}</div>
+                      )}
                       {r.powered_by && (
                         <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px" }}>
                           <span style={{ color:"#6b7280" }}>Powered by</span>
