@@ -33,6 +33,7 @@ export default function App() {
   return (
     <div style={{
       minHeight:"100vh",
+      backgroundAttachment:"fixed",
       background:"radial-gradient(ellipse at 15% 15%, #d4c5f9 0%, #e8e0ff 25%, #f0e6ff 50%, #fce4f4 75%, #ffd6e8 100%)",
       fontFamily:'"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
     }}>
