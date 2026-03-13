@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AppIcon from "../components/AppIcon";
 import * as forge from "node-forge";
 
 export default function CsrDecoder() {
@@ -77,7 +78,7 @@ export default function CsrDecoder() {
       {/* Header */}
       <div style={{ marginBottom:"28px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"8px" }}>
-          <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#f0f9ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}>🔏</div>
+          <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#f0f9ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}><AppIcon id="csr" size={40} /></div>
           <div>
             <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>CSR Decoder</h2>
             <p style={{ fontSize:"13px",color:"#6b7280" }}>Décodez et inspectez un Certificate Signing Request (CSR)</p>

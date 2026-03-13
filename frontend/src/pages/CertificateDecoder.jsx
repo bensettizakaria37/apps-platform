@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AppIcon from "../components/AppIcon";
 import * as forge from "node-forge";
 
 export default function CertificateDecoder() {
@@ -96,7 +97,7 @@ export default function CertificateDecoder() {
     <div style={{ maxWidth:"1000px", margin:"0 auto", padding:"40px 24px" }}>
       <div style={{ marginBottom:"28px" }}>
         <div style={{ display:"flex",alignItems:"center",gap:"12px",marginBottom:"8px" }}>
-          <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#fefce8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}>📜</div>
+          <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#fefce8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}><AppIcon id="certdecoder" size={40} /></div>
           <div>
             <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>Certificate Decoder</h2>
             <p style={{ fontSize:"13px",color:"#6b7280" }}>Decode and inspect any X.509 SSL/TLS certificate</p>

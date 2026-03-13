@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AppIcon from "../components/AppIcon";
 
 export default function TextReplacer() {
   const [input, setInput]   = useState("");
@@ -67,7 +68,7 @@ export default function TextReplacer() {
       {/* Header */}
       <div style={{ marginBottom:"28px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"8px" }}>
-          <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#fff7ed",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}>🔁</div>
+          <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#fff7ed",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}><AppIcon id="replacer" size={40} /></div>
           <div>
             <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>Text Replacer</h2>
             <p style={{ fontSize:"13px",color:"#6b7280" }}>Recherchez et remplacez du texte avec support Regex</p>

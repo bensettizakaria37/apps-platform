@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import AppIcon from "../components/AppIcon";
 
 const BACKEND = "https://apps-api.cloudfactory.ma";
 

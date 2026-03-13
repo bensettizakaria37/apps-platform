@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import AppIcon from "../components/AppIcon";
 
 const BACKEND = "https://apps-api.cloudfactory.ma";
 
@@ -83,7 +84,7 @@ export default function Ocr() {
     <div style={{ maxWidth:"900px", margin:"0 auto", padding:"40px 24px" }}>
       <div style={{ marginBottom:"28px" }}>
         <div style={{ display:"flex",alignItems:"center",gap:"12px",marginBottom:"8px" }}>
-          <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#f5f3ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}>🖼️</div>
+          <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#f5f3ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}><AppIcon id="ocr" size={40} /></div>
           <div>
             <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>OCR — Image vers Texte</h2>
             <p style={{ fontSize:"13px",color:"#6b7280" }}>Extrayez le texte de vos images et PDFs scannés</p>

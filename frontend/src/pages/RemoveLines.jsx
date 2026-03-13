@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AppIcon from "../components/AppIcon";
 
 export default function RemoveLines() {
   const [input, setInput]   = useState("");
@@ -73,7 +74,7 @@ export default function RemoveLines() {
       {/* Header */}
       <div style={{ marginBottom:"28px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"8px" }}>
-          <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#fdf2f8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}>🧹</div>
+          <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#fdf2f8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}><AppIcon id="removelines" size={40} /></div>
           <div>
             <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>Supprimer les lignes contenant</h2>
             <p style={{ fontSize:"13px",color:"#6b7280" }}>Filtrez et supprimez les lignes qui contiennent un mot-clé ou une expression</p>
