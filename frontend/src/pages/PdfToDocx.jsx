@@ -129,7 +129,7 @@ export default function PdfToDocx() {
       <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"28px" }}>
         <div style={{ width:"44px",height:"44px",borderRadius:"12px",background:"#eff6ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"22px" }}><AppIcon id="pdf" size={40} /></div>
         <div>
-          <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827",margin:0 }}>PDF → DOCX</h2>
+          <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827",margin:0 }}>PDF to DOCX</h2>
           <p style={{ fontSize:"13px",color:"#6b7280",margin:0 }}>Convertissez vos PDFs en documents Word éditables</p>
         </div>
       </div>
