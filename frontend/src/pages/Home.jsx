@@ -6,6 +6,7 @@ const apps = [
   { id:"removelines",icon:"🧹", title:"Remove Lines Containing",   desc:"Filter and remove lines that contain a keyword or expression.",        color:"#9333ea", bg:"#fdf4ff" },
   { id:"replacer",   icon:"🔁", title:"Text Replacer",             desc:"Find and replace text with Regex support.",                            color:"#ea580c", bg:"#fff7ed" },
   { id:"secret",     icon:"🔐", title:"Secret Sharing",            desc:"Share passwords and secrets via a unique self-destructing link.",      color:"#d97706", bg:"#fffbeb" },
+  { id:"geopeeker", icon:"🌍", title:"GeoPeeker", desc:"See how your website appears from different locations worldwide.", color:"#1d4ed8", bg:"#eff6ff" },
   { id:"certdecoder", icon:"📜", title:"Certificate Decoder", desc:"Decode and inspect any X.509 SSL/TLS certificate.", color:"#ca8a04", bg:"#fefce8" },
   { id:"whois", icon:"🌐", title:"Who.is Lookup", desc:"Get registration and ownership details for any domain.", color:"#9333ea", bg:"#fdf4ff" },
   { id:"csr",        icon:"🔏", title:"CSR Decoder",               desc:"Decode and inspect your Certificate Signing Requests.",               color:"#0ea5e9", bg:"#f0f9ff" },

@@ -26,6 +26,7 @@ export default function Navbar({ page, setPage }) {
           { id:"removelines", label:"🧹 Remove Lines" },
           { id:"replacer",    label:"🔁 Text Replacer" },
           { id:"secret",      label:"🔐 Secret Sharing" },
+          { id:"geopeeker",    label:"🌍 GeoPeeker" },
           { id:"certdecoder", label:"📜 Certificate Decoder" },
           { id:"whois",       label:"🌐 Who.is Lookup" },
           { id:"csr",         label:"🔏 CSR Decoder" },

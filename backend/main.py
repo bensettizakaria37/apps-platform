@@ -548,3 +548,50 @@ def whois_lookup(domain: str):
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ── GeoPeeker ────────────────────────────────────────────────────────────────
+import asyncio
+import httpx
+
+WORKER_URL = "https://bitter-dust-0218.nplusone-enterprise-account.workers.dev"
+
+REGIONS = [
+    { "id":"us-east",    "name":"New York",    "flag":"🇺🇸", "country":"US" },
+    { "id":"us-west",    "name":"Los Angeles", "flag":"🇺🇸", "country":"US" },
+    { "id":"eu-west",    "name":"London",      "flag":"🇬🇧", "country":"GB" },
+    { "id":"eu-central", "name":"Frankfurt",   "flag":"🇩🇪", "country":"DE" },
+    { "id":"ap-east",    "name":"Singapore",   "flag":"🇸🇬", "country":"SG" },
+    { "id":"ap-south",   "name":"Tokyo",       "flag":"🇯🇵", "country":"JP" },
+]
+
+async def fetch_region(client, target_url, region):
+    try:
+        start = asyncio.get_event_loop().time()
+        r = await client.get(
+            WORKER_URL,
+            params={"url": target_url},
+            headers={"CF-IPCountry": region["country"]},
+            timeout=15,
+        )
+        data = r.json()
+        data["region_id"]   = region["id"]
+        data["region_name"] = region["name"]
+        data["region_flag"] = region["flag"]
+        return data
+    except Exception as e:
+        return {
+            "region_id":   region["id"],
+            "region_name": region["name"],
+            "region_flag": region["flag"],
+            "error":       str(e),
+        }
+
+@app.get("/geopeek")
+async def geopeek(url: str):
+    if not url.startswith("http"):
+        url = "https://" + url
+    async with httpx.AsyncClient() as client:
+        tasks = [fetch_region(client, url, r) for r in REGIONS]
+        results = await asyncio.gather(*tasks)
+    return {"url": url, "results": list(results)}

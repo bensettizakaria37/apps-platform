@@ -6,6 +6,7 @@ import Ocr from "./pages/Ocr";
 import Secret from "./pages/Secret";
 import CompressPdf from "./pages/CompressPdf";
 import SslChecker from "./pages/SslChecker";
+import GeoPeeker from "./pages/GeoPeeker";
 import CertificateDecoder from "./pages/CertificateDecoder";
 import WhoisLookup from "./pages/WhoisLookup";
 import CsrDecoder from "./pages/CsrDecoder";
@@ -26,6 +27,7 @@ export default function App() {
       {page==="secret"     && <Secret />}
       {page==="compress"   && <CompressPdf />}
       {page==="ssl" && <SslChecker />}
+      {page==="geopeeker" && <GeoPeeker />}
       {page==="certdecoder" && <CertificateDecoder />}
       {page==="whois" && <WhoisLookup />}
       {page==="csr" && <CsrDecoder />}
