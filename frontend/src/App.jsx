@@ -22,25 +22,33 @@ export default function App() {
     setPage(id);
   };
 
-  const BackButton = () => (
-    <button onClick={()=>navigate("home")} style={{
-      position:"fixed", top:"20px", left:"20px", zIndex:100,
-      display:"flex", alignItems:"center", gap:"6px",
-      padding:"8px 14px", borderRadius:"20px", border:"none",
-      background:"rgba(255,255,255,0.85)", backdropFilter:"blur(8px)",
-      boxShadow:"0 2px 12px rgba(0,0,0,0.1)",
-      color:"#6c5ce7", fontWeight:"600", fontSize:"13px", cursor:"pointer",
-    }}>
-      ← FactoryTools
-    </button>
-  );
-
   if (page === "home") return <Home setPage={navigate} />;
 
   return (
-    <div style={{ minHeight:"100vh", background:"#f9fafb" }}>
-      <BackButton />
-      <div style={{ paddingTop:"0" }}>
+    <div style={{
+      minHeight:"100vh",
+      background:"radial-gradient(ellipse at 15% 15%, #d4c5f9 0%, #e8e0ff 25%, #f0e6ff 50%, #fce4f4 75%, #ffd6e8 100%)",
+      fontFamily:'"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+    }}>
+      {/* Back button */}
+      <div style={{ padding:"20px 32px 0" }}>
+        <button onClick={()=>navigate("home")} style={{
+          display:"inline-flex",alignItems:"center",gap:"6px",
+          padding:"8px 16px",borderRadius:"20px",border:"none",
+          background:"rgba(255,255,255,0.75)",backdropFilter:"blur(12px)",
+          boxShadow:"0 2px 10px rgba(108,92,231,0.12)",
+          color:"#6c5ce7",fontWeight:"600",fontSize:"13px",cursor:"pointer",
+          transition:"all 0.15s",
+        }}
+        onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.95)"}
+        onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.75)"}
+        >
+          ← FactoryTools
+        </button>
+      </div>
+
+      {/* Page content */}
+      <div>
         {page==="pdf"         && <PdfToDocx />}
         {page==="ocr"         && <Ocr />}
         {page==="secret"      && <Secret />}
