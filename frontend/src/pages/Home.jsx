@@ -26,13 +26,6 @@ export default function Home({ setPage }) {
 
         {/* Hero */}
         <div style={{ textAlign:"center", marginBottom:"56px" }}>
-          <div style={{ display:"flex",alignItems:"center",justifyContent:"center",gap:"10px",marginBottom:"24px" }}>
-            <div style={{ width:"40px",height:"40px",borderRadius:"11px",background:"linear-gradient(135deg,#6c5ce7,#a29bfe)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 14px rgba(108,92,231,0.35)" }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2 L14.5 8.5 L21 9 L16.5 13.5 L18 20 L12 16.5 L6 20 L7.5 13.5 L3 9 L9.5 8.5Z" fill="white"/>
-              </svg>
-            </div>
-            <span style={{ fontSize:"18px",fontWeight:"700",color:"#1a1a2e",letterSpacing:"-0.5px" }}>FactoryTools</span>
           </div>
           <h1 style={{ fontSize:"48px",fontWeight:"800",color:"#1a1a2e",letterSpacing:"-2px",lineHeight:1.05,marginBottom:"14px" }}>
             Your productivity tools,<br/>
