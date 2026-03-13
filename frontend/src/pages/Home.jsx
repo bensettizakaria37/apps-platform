@@ -24,9 +24,7 @@ export default function Home({ setPage }) {
     }}>
       <div style={{ maxWidth:"960px", margin:"0 auto" }}>
 
-        {/* Hero */}
         <div style={{ textAlign:"center", marginBottom:"56px" }}>
-          </div>
           <h1 style={{ fontSize:"48px",fontWeight:"800",color:"#1a1a2e",letterSpacing:"-2px",lineHeight:1.05,marginBottom:"14px" }}>
             Your productivity tools,<br/>
             <span style={{ background:"linear-gradient(135deg,#6c5ce7,#a29bfe,#fd79a8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>
@@ -38,12 +36,11 @@ export default function Home({ setPage }) {
           </p>
         </div>
 
-        {/* Grid */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", background:"rgba(255,255,255,0.7)", backdropFilter:"blur(20px)", borderRadius:"20px", border:"1px solid rgba(255,255,255,0.9)", overflow:"hidden", boxShadow:"0 4px 32px rgba(108,92,231,0.1)" }}>
           {APPS.map((app, i) => {
             const col = i % 3;
             const row = Math.floor(i / 3);
-            const isLastRow = Math.floor((APPS.length-1)/3) === row;
+            const isLastRow = Math.floor((APPS.length - 1) / 3) === row;
             return (
               <div
                 key={app.id}
@@ -53,8 +50,8 @@ export default function Home({ setPage }) {
                   borderRight: col < 2 ? "1px solid rgba(0,0,0,0.06)" : "none",
                   borderBottom: !isLastRow ? "1px solid rgba(0,0,0,0.06)" : "none",
                 }}
-                onMouseEnter={e=>e.currentTarget.style.background="rgba(108,92,231,0.05)"}
-                onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(108,92,231,0.05)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
               >
                 <div style={{ display:"flex", alignItems:"center", gap:"14px", marginBottom:"10px" }}>
                   <AppIcon id={app.id} size={44} />
