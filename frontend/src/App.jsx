@@ -5,35 +5,36 @@ import PdfToDocx from "./pages/PdfToDocx";
 import Ocr from "./pages/Ocr";
 import Secret from "./pages/Secret";
 import CompressPdf from "./pages/CompressPdf";
+import RemoveDuplicates from "./pages/RemoveDuplicates";
+import TextReplacer from "./pages/TextReplacer";
+import RemoveLines from "./pages/RemoveLines";
+import CsrDecoder from "./pages/CsrDecoder";
 import SslChecker from "./pages/SslChecker";
-import GeoPeeker from "./pages/GeoPeeker";
 import CertificateDecoder from "./pages/CertificateDecoder";
 import WhoisLookup from "./pages/WhoisLookup";
-import CsrDecoder from "./pages/CsrDecoder";
-import RemoveLines from "./pages/RemoveLines";
-import TextReplacer from "./pages/TextReplacer";
-import RemoveDuplicates from "./pages/RemoveDuplicates";
+import GeoPeeker from "./pages/GeoPeeker";
 
 export default function App() {
   const urlParams = new URLSearchParams(window.location.search);
   const urlPage = urlParams.get("page");
   const [page, setPage] = useState(urlPage || "home");
+
   return (
     <div style={{ minHeight:"100vh", background:"#f9fafb", fontFamily:"system-ui,-apple-system,sans-serif" }}>
-      <Navbar page={page} setPage={setPage} />
-      {page==="home"       && <Home setPage={setPage} />}
-      {page==="pdf"        && <PdfToDocx />}
-      {page==="ocr"        && <Ocr />}
-      {page==="secret"     && <Secret />}
-      {page==="compress"   && <CompressPdf />}
-      {page==="ssl" && <SslChecker />}
-      {page==="geopeeker" && <GeoPeeker />}
-      {page==="certdecoder" && <CertificateDecoder />}
-      {page==="whois" && <WhoisLookup />}
-      {page==="csr" && <CsrDecoder />}
+      {page !== "home" && <Navbar page={page} setPage={setPage} />}
+      {page==="home"        && <Home setPage={setPage} />}
+      {page==="pdf"         && <PdfToDocx />}
+      {page==="ocr"         && <Ocr />}
+      {page==="secret"      && <Secret />}
+      {page==="compress"    && <CompressPdf />}
+      {page==="duplicates"  && <RemoveDuplicates />}
+      {page==="replacer"    && <TextReplacer />}
       {page==="removelines" && <RemoveLines />}
-      {page==="replacer" && <TextReplacer />}
-      {page==="duplicates" && <RemoveDuplicates />}
+      {page==="csr"         && <CsrDecoder />}
+      {page==="ssl"         && <SslChecker />}
+      {page==="certdecoder" && <CertificateDecoder />}
+      {page==="whois"       && <WhoisLookup />}
+      {page==="geopeeker"   && <GeoPeeker />}
     </div>
   );
 }
