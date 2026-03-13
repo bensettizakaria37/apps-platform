@@ -15,13 +15,24 @@ const APPS = [
 
 export default function Home({ setPage }) {
   return (
-    <div style={{ minHeight:"100vh", background:"#f7f7f8", fontFamily:'"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', padding:"48px 32px" }}>
+    <div style={{
+      minHeight:"100vh",
+      background:"radial-gradient(ellipse at 15% 15%, #d4c5f9 0%, #e8e0ff 25%, #f0e6ff 50%, #fce4f4 75%, #ffd6e8 100%)",
+      fontFamily:'"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+      padding:"56px 32px",
+    }}>
       <div style={{ maxWidth:"1100px", margin:"0 auto" }}>
 
-        {/* Header */}
-        <div style={{ marginBottom:"40px" }}>
-          <h1 style={{ fontSize:"28px",fontWeight:"700",color:"#1a1a2e",marginBottom:"6px",letterSpacing:"-0.5px" }}>All Tools</h1>
-          <p style={{ fontSize:"14px",color:"#9ca3af" }}>{APPS.length} tools available</p>
+        {/* Hero */}
+        <div style={{ textAlign:"center", marginBottom:"56px" }}>
+          <div style={{ display:"inline-block",background:"rgba(108,92,231,0.1)",color:"#6c5ce7",fontSize:"12px",fontWeight:"600",letterSpacing:"0.1em",textTransform:"uppercase",padding:"4px 14px",borderRadius:"20px",marginBottom:"20px" }}>Tools Platform</div>
+          <h1 style={{ fontSize:"48px",fontWeight:"800",color:"#1a1a2e",letterSpacing:"-2px",lineHeight:1.05,marginBottom:"16px" }}>
+            Your productivity tools,<br/>
+            <span style={{ background:"linear-gradient(135deg,#6c5ce7,#a29bfe,#fd79a8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>all in one place.</span>
+          </h1>
+          <p style={{ fontSize:"17px",color:"#636e72",lineHeight:1.6,maxWidth:"480px",margin:"0 auto" }}>
+            Simple, fast and free tools to convert, extract and transform your files.
+          </p>
         </div>
 
         {/* Grid */}
@@ -30,13 +41,12 @@ export default function Home({ setPage }) {
             <div
               key={app.id}
               onClick={() => setPage(app.id)}
-              style={{ background:"#fff",borderRadius:"16px",padding:"28px 24px",cursor:"pointer",transition:"all 0.2s",boxShadow:"0 1px 4px rgba(0,0,0,0.06)",border:"1px solid #f0f0f0" }}
-              onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 8px 28px rgba(0,0,0,0.1)";e.currentTarget.style.transform="translateY(-3px)";}}
-              onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,0.06)";e.currentTarget.style.transform="translateY(0)";}}
+              style={{ background:"rgba(255,255,255,0.75)",backdropFilter:"blur(16px)",borderRadius:"20px",padding:"28px 24px",cursor:"pointer",transition:"all 0.2s",boxShadow:"0 2px 12px rgba(108,92,231,0.07)",border:"1px solid rgba(255,255,255,0.9)" }}
+              onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 12px 32px rgba(108,92,231,0.18)";e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.background="rgba(255,255,255,0.95)";}}
+              onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 2px 12px rgba(108,92,231,0.07)";e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.background="rgba(255,255,255,0.75)";}}
             >
-              {/* Icon */}
-              <div style={{ width:"56px",height:"56px",borderRadius:"14px",background:`linear-gradient(135deg,${app.g[0]},${app.g[1]})`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:"20px",boxShadow:`0 4px 12px ${app.g[1]}55` }}>
-                <svg viewBox="0 0 48 48" width="56" height="56" fill="none">{app.icon}</svg>
+              <div style={{ width:"48px",height:"48px",borderRadius:"14px",background:`linear-gradient(135deg,${app.g[0]},${app.g[1]})`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:"18px",boxShadow:`0 4px 12px ${app.g[1]}55` }}>
+                <svg viewBox="0 0 48 48" width="48" height="48" fill="none">{app.icon}</svg>
               </div>
               <h3 style={{ fontSize:"16px",fontWeight:"700",color:"#1a1a2e",marginBottom:"8px",letterSpacing:"-0.3px" }}>{app.title}</h3>
               <p style={{ fontSize:"13px",color:"#6b7280",lineHeight:"1.65" }}>{app.desc}</p>
