@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Home from "./pages/Home";
 import PdfToDocx from "./pages/PdfToDocx";
 import Ocr from "./pages/Ocr";
@@ -14,11 +14,17 @@ import WhoisLookup from "./pages/WhoisLookup";
 import GeoPeeker from "./pages/GeoPeeker";
 
 export default function App() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const [page, setPage] = useState(urlParams.get("page") || "home");
+  const getPage = () => new URLSearchParams(window.location.search).get("page") || "home";
+  const [page, setPage] = useState(getPage);
+
+  useEffect(() => {
+    const onPop = () => setPage(getPage());
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const navigate = (id) => {
-    window.history.replaceState({}, "", `/?page=${id}`);
+    window.history.pushState({}, "", `/?page=${id}`);
     setPage(id);
   };
 
@@ -30,7 +36,6 @@ export default function App() {
       background:"radial-gradient(ellipse at 15% 15%, #d4c5f9 0%, #e8e0ff 25%, #f0e6ff 50%, #fce4f4 75%, #ffd6e8 100%)",
       fontFamily:'"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
     }}>
-      {/* Back button */}
       <div style={{ padding:"20px 32px 0" }}>
         <button onClick={()=>navigate("home")} style={{
           display:"inline-flex",alignItems:"center",gap:"6px",
@@ -46,8 +51,6 @@ export default function App() {
           ← FactoryTools
         </button>
       </div>
-
-      {/* Page content */}
       <div>
         {page==="pdf"         && <PdfToDocx />}
         {page==="ocr"         && <Ocr />}
