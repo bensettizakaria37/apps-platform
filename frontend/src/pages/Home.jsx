@@ -25,8 +25,8 @@ export default function Home({ setPage }) {
       <div style={{ maxWidth:"960px", margin:"0 auto" }}>
 
         {/* Top navbar */}
-        <div style={{ display:"flex", alignItems:"center", padding:"0", marginBottom:"48px" }}>
-          <span style={{ fontSize:"22px", fontWeight:"800", color:"#6c4bff", letterSpacing:"-0.8px" }}>FactoryTools</span>
+        <div style={{ marginBottom:"48px" }}>
+          <span style={{ display:"inline-flex", alignItems:"center", gap:"6px", padding:"8px 16px", borderRadius:"20px", border:"none", background:"rgba(255,255,255,0.75)", backdropFilter:"blur(12px)", boxShadow:"0 2px 10px rgba(108,92,231,0.12)", color:"#6c5ce7", fontWeight:"600", fontSize:"13px" }}>FactoryTools</span>
         </div>
 
         {/* Hero */}
