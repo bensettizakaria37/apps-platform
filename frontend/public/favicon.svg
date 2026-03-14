@@ -1,10 +1,10 @@
-<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-  <rect width="32" height="32" rx="8" fill="url(#grad)"/>
-  <text x="16" y="23" textAnchor="middle" fill="white" fontSize="13" fontWeight="800" fontFamily="Arial, sans-serif">FT</text>
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="grad" x1="0" y1="0" x2="32" y2="32">
+    <linearGradient id="g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#a29bfe"/>
       <stop offset="100%" stop-color="#6c5ce7"/>
     </linearGradient>
   </defs>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <text x="32" y="44" text-anchor="middle" fill="white" font-size="26" font-weight="900" font-family="Arial Black, Arial, sans-serif" letter-spacing="-1">FT</text>
 </svg>
