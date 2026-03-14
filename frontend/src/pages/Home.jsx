@@ -26,7 +26,7 @@ export default function Home({ setPage }) {
 
         {/* Top-left brand */}
         <div style={{ marginBottom:"52px" }}>
-          <span style={{ fontSize:"22px", fontWeight:"800", color:"#1a1a2e", letterSpacing:"-0.8px" }}>FactoryTools</span>
+          <span style={{ fontSize:"22px", fontWeight:"800", color:"#6c4bff", letterSpacing:"-0.8px" }}>FactoryTools</span>
         </div>
 
         {/* Hero */}
