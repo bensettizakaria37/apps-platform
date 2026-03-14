@@ -20,12 +20,12 @@ export default function Home({ setPage }) {
     <div style={{
       minHeight:"100vh",
       fontFamily:'"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
-      padding:"28px 32px 56px",
+      padding:"0 32px 56px",
     }}>
       <div style={{ maxWidth:"960px", margin:"0 auto" }}>
 
-        {/* Top-left brand */}
-        <div style={{ marginBottom:"52px" }}>
+        {/* Top navbar */}
+        <div style={{ display:"flex", alignItems:"center", padding:"20px 0", marginBottom:"48px", borderBottom:"1px solid rgba(0,0,0,0.06)" }}>
           <span style={{ fontSize:"22px", fontWeight:"800", color:"#6c4bff", letterSpacing:"-0.8px" }}>FactoryTools</span>
         </div>
 
