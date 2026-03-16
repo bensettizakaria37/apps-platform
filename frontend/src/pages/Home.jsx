@@ -20,16 +20,10 @@ export default function Home({ setPage }) {
     <div style={{
       minHeight:"100vh",
       fontFamily:'"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
-      padding:"0 32px 56px",
+      padding:"56px 32px",
     }}>
       <div style={{ maxWidth:"960px", margin:"0 auto" }}>
 
-        {/* Top navbar */}
-        <div style={{ display:"flex", alignItems:"center", padding:"20px 0", marginBottom:"48px", borderBottom:"1px solid rgba(0,0,0,0.06)" }}>
-          <span style={{ fontSize:"22px", fontWeight:"800", color:"#6c4bff", letterSpacing:"-0.8px" }}>FactoryTools</span>
-        </div>
-
-        {/* Hero */}
         <div style={{ textAlign:"center", marginBottom:"56px" }}>
           <h1 style={{ fontSize:"48px",fontWeight:"800",color:"#1a1a2e",letterSpacing:"-2px",lineHeight:1.05,marginBottom:"14px" }}>
             Your productivity tools,<br/>
@@ -42,7 +36,6 @@ export default function Home({ setPage }) {
           </p>
         </div>
 
-        {/* Grid */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", background:"rgba(255,255,255,0.7)", backdropFilter:"blur(20px)", borderRadius:"20px", border:"1px solid rgba(255,255,255,0.9)", overflow:"hidden", boxShadow:"0 4px 32px rgba(108,92,231,0.1)" }}>
           {APPS.map((app, i) => {
             const col = i % 3;
