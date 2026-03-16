@@ -20,7 +20,7 @@ export default function PdfToDocx() {
   const [file, setFile]         = useState(null);
   const [drag, setDrag]         = useState(false);
   const [status, setStatus]     = useState("idle");
-  const [uploadPct, setUploading...] = useState(0);
+  const [uploadPct, setUploadPct] = useState(0);
   const [speed, setSpeed]       = useState(0);
   const [timeLeft, setTimeLeft] = useState(null);
   const [convProgress, setConvProgress] = useState(0);
@@ -64,7 +64,7 @@ export default function PdfToDocx() {
 
   const convert = () => {
     if (!file) return;
-    setStatus("uploading"); setUploading...(0); setSpeed(0); setTimeLeft(null); setError("");
+    setStatus("uploading"); setUploadPct(0); setSpeed(0); setTimeLeft(null); setError("");
 
     const fd = new FormData();
     fd.append("file", file);
@@ -80,7 +80,7 @@ export default function PdfToDocx() {
       const elapsed  = (Date.now() - startTime) / 1000;
       const bps      = e.loaded / elapsed;
       const remaining = (e.total - e.loaded) / bps;
-      setUploading...(pct);
+      setUploadPct(pct);
       setSpeed(Math.round(bps));
       setTimeLeft(Math.round(remaining));
       lastLoaded = e.loaded;
@@ -110,7 +110,7 @@ export default function PdfToDocx() {
     if (pollRef.current) clearInterval(pollRef.current);
     if (xhrRef.current) xhrRef.current.abort();
     setFile(null); setStatus("idle"); setDownloadUrl(null);
-    setError(""); setUploading...(0); setConvProgress(0);
+    setError(""); setUploadPct(0); setConvProgress(0);
   };
 
   const s = {
