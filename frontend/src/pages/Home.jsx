@@ -25,6 +25,7 @@ export default function Home({ setPage }) {
       <div style={{ maxWidth:"960px", margin:"0 auto" }}>
 
         <div style={{ textAlign:"center", marginBottom:"56px" }}>
+          <p style={{ fontSize:"12px",fontWeight:"600",letterSpacing:"0.15em",textTransform:"uppercase",color:"#a29bfe",marginBottom:"16px" }}>FactoryTools</p>
           <h1 style={{ fontSize:"48px",fontWeight:"800",color:"#1a1a2e",letterSpacing:"-2px",lineHeight:1.05,marginBottom:"14px" }}>
             Your productivity tools,<br/>
             <span style={{ background:"linear-gradient(135deg,#6c5ce7,#a29bfe,#fd79a8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>
