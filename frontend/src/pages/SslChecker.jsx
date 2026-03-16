@@ -16,7 +16,7 @@ export default function SslChecker() {
     try {
       const res = await fetch(`${BACKEND}/ssl-check?host=${encodeURIComponent(h)}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Erreur serveur");
+      if (!res.ok) throw new Error(data.detail || "Error serveur");
       setResult(data);
       setStatus("done");
     } catch(e) {

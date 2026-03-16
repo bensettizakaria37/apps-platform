@@ -22,7 +22,7 @@ export default function CompressPdf() {
 
   const handleFile = (f) => {
     if (!f?.name.toLowerCase().endsWith(".pdf")) { setError("Veuillez sélectionner un fichier PDF."); return; }
-    if (f.size > 50 * 1024 * 1024) { setError("Fichier trop volumineux. Maximum 50MB."); return; }
+    if (f.size > 50 * 1024 * 1024) { setError("File too large. Maximum 50MB."); return; }
     setFile(f); setError(""); setStatus("idle"); setResult(null);
   };
 
@@ -44,12 +44,12 @@ export default function CompressPdf() {
           setStatus("done"); setProgress(100);
         } else if (data.status === "error") {
           clearInterval(pollRef.current);
-          setError(data.error || "Erreur inconnue");
+          setError(data.error || "Error inconnue");
           setStatus("error");
         }
       } catch(e) {
         clearInterval(pollRef.current);
-        setError("Erreur de connexion");
+        setError("Error de connexion");
         setStatus("error");
       }
     }, 2000);
@@ -83,7 +83,7 @@ export default function CompressPdf() {
       <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"28px" }}>
         <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#f0fdf4",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}><AppIcon id="compress" size={40} /></div>
         <div>
-          <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>Compresser PDF</h2>
+          <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>Compress PDF</h2>
           <p style={{ fontSize:"13px",color:"#6b7280" }}>Réduisez la taille de vos PDFs sans perte de qualité visible</p>
         </div>
       </div>
@@ -113,13 +113,13 @@ export default function CompressPdf() {
       {(status==="uploading"||status==="processing") && (
         <div style={{ marginTop:"16px" }}>
           <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px",color:"#6b7280",marginBottom:"6px" }}>
-            <span>{status==="uploading"?"⬆️ Upload...":"⚙️ Compression en cours..."}</span>
+            <span>{status==="uploading"?"⬆️ Uploading...":"⚙️ Compressing... cours..."}</span>
             <span>{progress}%</span>
           </div>
           <div style={{ background:"#e5e7eb",borderRadius:"6px",height:"8px",overflow:"hidden" }}>
             <div style={{ height:"100%",background:"linear-gradient(90deg,#059669,#10b981)",borderRadius:"6px",width:progress+"%",transition:"width 0.5s" }} />
           </div>
-          {status==="processing" && <p style={{ fontSize:"11px",color:"#9ca3af",marginTop:"6px",textAlign:"center" }}>Traitement en arrière-plan ⏳</p>}
+          {status==="processing" && <p style={{ fontSize:"11px",color:"#9ca3af",marginTop:"6px",textAlign:"center" }}>Processing in background ⏳</p>}
         </div>
       )}
 
@@ -129,7 +129,7 @@ export default function CompressPdf() {
           background:"linear-gradient(135deg,#059669,#10b981)", color:"#fff",
           opacity:!file||status==="uploading"||status==="processing"?0.5:1
         }}>
-          {status==="uploading"?"⬆️ Upload...":status==="processing"?"⚙️ Compression...":"🗜️ Compresser le PDF"}
+          {status==="uploading"?"⬆️ Uploading...":status==="processing"?"⚙️ Compressing...":"🗜️ Compress PDF"}
         </button>
       )}
 
@@ -137,8 +137,8 @@ export default function CompressPdf() {
         <>
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"10px",marginTop:"20px" }}>
             {[
-              { label:"Taille originale",   value:formatSize(result.originalSize),   color:"#dc2626", bg:"#fef2f2" },
-              { label:"Taille compressée",  value:formatSize(result.compressedSize), color:"#059669", bg:"#f0fdf4" },
+              { label:"Original size",   value:formatSize(result.originalSize),   color:"#dc2626", bg:"#fef2f2" },
+              { label:"Compressed size",  value:formatSize(result.compressedSize), color:"#059669", bg:"#f0fdf4" },
               { label:"Réduction",          value:`-${result.reduction}%`,           color:"#1d4ed8", bg:"#eff6ff" },
             ].map(s=>(
               <div key={s.label} style={{ background:s.bg,borderRadius:"12px",padding:"14px",textAlign:"center" }}>
@@ -151,9 +151,9 @@ export default function CompressPdf() {
             display:"block",textAlign:"center",padding:"14px",borderRadius:"12px",marginTop:"16px",
             background:"linear-gradient(135deg,#059669,#10b981)",color:"#fff",
             fontSize:"15px",fontWeight:"700",textDecoration:"none"
-          }}>⬇️ Télécharger {result.name}</a>
+          }}>⬇️ Download {result.name}</a>
           <button onClick={reset} style={{ ...s.btn,marginTop:"10px",background:"#f3f4f6",color:"#374151",border:"1px solid #e5e7eb" }}>
-            Compresser un autre PDF
+            Compress another PDF
           </button>
         </>
       )}

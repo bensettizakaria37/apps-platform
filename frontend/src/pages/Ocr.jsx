@@ -24,7 +24,7 @@ export default function Ocr() {
   const ALLOWED = [".jpg",".jpeg",".png",".bmp",".tiff",".tif",".webp",".pdf"];
 
   const handleFile = (f) => {
-    if (f && f.size > 50 * 1024 * 1024) { setError("Fichier trop volumineux. Maximum 50MB."); return; }
+    if (f && f.size > 50 * 1024 * 1024) { setError("File too large. Maximum 50MB."); return; }
     if (!f) return;
     const ext = "."+f.name.split(".").pop().toLowerCase();
     if (!ALLOWED.includes(ext)) { setError("Format non supporté."); return; }
@@ -48,7 +48,7 @@ export default function Ocr() {
         return;
       }
       if (job.status === "error") {
-        throw new Error(job.error || "Erreur OCR");
+        throw new Error(job.error || "Error OCR");
       }
     }
     throw new Error("Timeout — réessayez avec un fichier plus petit");
@@ -86,7 +86,7 @@ export default function Ocr() {
         <div style={{ display:"flex",alignItems:"center",gap:"12px",marginBottom:"8px" }}>
           <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#f5f3ff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}><AppIcon id="ocr" size={40} /></div>
           <div>
-            <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>OCR — Image vers Texte</h2>
+            <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>OCR — Image to Text</h2>
             <p style={{ fontSize:"13px",color:"#6b7280" }}>Extrayez le texte de vos images et PDFs scannés</p>
           </div>
         </div>
@@ -95,7 +95,7 @@ export default function Ocr() {
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"20px" }}>
         {/* LEFT */}
         <div style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"16px",padding:"24px" }}>
-          <p style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:"14px" }}>Fichier source</p>
+          <p style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:"14px" }}>Source file</p>
 
           <div
             onClick={() => inputRef.current.click()}
@@ -131,7 +131,7 @@ export default function Ocr() {
           {error && <div style={{ background:"#fef2f2",border:"1px solid #fecaca",borderRadius:"10px",padding:"10px 14px",color:"#dc2626",fontSize:"12px",marginTop:"10px" }}>⚠️ {error}</div>}
 
           <div style={{ marginTop:"14px" }}>
-            <label style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",display:"block",marginBottom:"6px" }}>Langue</label>
+            <label style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",display:"block",marginBottom:"6px" }}>Language</label>
             <select value={lang} onChange={e=>setLang(e.target.value)} style={{ width:"100%",padding:"9px 12px",border:"1px solid #e5e7eb",borderRadius:"10px",fontSize:"13px",background:"#f9fafb" }}>
               <option value="fra+eng+ara">Français + Anglais + Arabe</option>
               <option value="fra">Français</option>
@@ -164,7 +164,7 @@ export default function Ocr() {
 
         {/* RIGHT */}
         <div style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"16px",padding:"24px",display:"flex",flexDirection:"column" }}>
-          <p style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:"14px" }}>Texte extrait</p>
+          <p style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:"14px" }}>Extracted text</p>
           <div style={{ flex:1,minHeight:"260px",background:"#f9fafb",borderRadius:"12px",padding:"16px",fontSize:"13px",lineHeight:"1.7",color: text?"#111827":"#9ca3af",whiteSpace:"pre-wrap",overflowY:"auto",fontStyle:text?"normal":"italic" }}>
             {text || "Le texte extrait apparaîtra ici..."}
           </div>
@@ -183,10 +183,10 @@ export default function Ocr() {
           {text && (
             <div style={{ display:"flex",gap:"8px",marginTop:"12px" }}>
               <button onClick={copy} style={{ flex:1,padding:"9px 6px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#eff6ff",color:"#1d4ed8",fontSize:"12px",fontWeight:"600",cursor:"pointer" }}>
-                {copied ? "Copié !" : "Copier"}
+                {copied ? "Copied!" : "Copy"}
               </button>
               <button onClick={downloadText} style={{ flex:1,padding:"9px 6px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#f5f3ff",color:"#7c3aed",fontSize:"12px",fontWeight:"600",cursor:"pointer" }}>
-                Télécharger .TXT
+                Download .TXT
               </button>
             </div>
           )}

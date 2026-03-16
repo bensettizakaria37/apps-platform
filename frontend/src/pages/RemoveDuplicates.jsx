@@ -64,7 +64,7 @@ export default function RemoveDuplicates() {
         <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"8px" }}>
           <div style={{ width:"40px", height:"40px", borderRadius:"10px", background:"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"20px" }}><AppIcon id="duplicates" size={40} /></div>
           <div>
-            <h2 style={{ fontSize:"20px", fontWeight:"700", color:"#111827" }}>Supprimer les doublons</h2>
+            <h2 style={{ fontSize:"20px", fontWeight:"700", color:"#111827" }}>Remove Duplicates</h2>
             <p style={{ fontSize:"13px", color:"#6b7280" }}>Supprimez les lignes dupliquées de votre texte instantanément</p>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function RemoveDuplicates() {
         {[
           { key:"caseSensitive", label:"Sensible à la casse" },
           { key:"trimLines",     label:"Ignorer les espaces" },
-          { key:"removeEmpty",   label:"Supprimer lignes vides" },
+          { key:"removeEmpty",   label:"Remove empty lines" },
         ].map(({ key, label }) => (
           <label key={key} style={{ display:"flex", alignItems:"center", gap:"8px", cursor:"pointer", fontSize:"13px", color:"#374151" }}>
             <div
@@ -105,7 +105,7 @@ export default function RemoveDuplicates() {
         {/* Input */}
         <div style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:"16px", padding:"20px", display:"flex", flexDirection:"column" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"12px" }}>
-            <p style={{ fontSize:"12px", fontWeight:"600", color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.08em" }}>Texte source</p>
+            <p style={{ fontSize:"12px", fontWeight:"600", color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.08em" }}>Source text</p>
             <span style={{ fontSize:"11px", color:"#9ca3af" }}>{input.split("\n").filter(Boolean).length} lignes</span>
           </div>
           <textarea
@@ -125,13 +125,13 @@ export default function RemoveDuplicates() {
               fontSize:"13px", fontWeight:"700", cursor: input.trim() ? "pointer" : "not-allowed",
               opacity: input.trim() ? 1 : 0.5
             }}>
-              Supprimer les doublons
+              Remove Duplicates
             </button>
             <button onClick={reset} style={{
               flex:1, padding:"11px", border:"1px solid #e5e7eb", borderRadius:"10px",
               background:"#f9fafb", color:"#6b7280", fontSize:"13px", fontWeight:"600", cursor:"pointer"
             }}>
-              Effacer
+              Clear
             </button>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function RemoveDuplicates() {
         {/* Output */}
         <div style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:"16px", padding:"20px", display:"flex", flexDirection:"column" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"12px" }}>
-            <p style={{ fontSize:"12px", fontWeight:"600", color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.08em" }}>Résultat</p>
+            <p style={{ fontSize:"12px", fontWeight:"600", color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.08em" }}>Result</p>
             {stats && <span style={{ fontSize:"11px", color:"#9ca3af" }}>{stats.unique} lignes uniques</span>}
           </div>
           <textarea
@@ -172,10 +172,10 @@ export default function RemoveDuplicates() {
           {output && (
             <div style={{ display:"flex", gap:"8px", marginTop:"12px" }}>
               <button onClick={copy} style={{ flex:1, padding:"9px 6px", border:"1px solid #e5e7eb", borderRadius:"10px", background:"#eff6ff", color:"#1d4ed8", fontSize:"12px", fontWeight:"600", cursor:"pointer" }}>
-                {copied ? "Copié !" : "Copier"}
+                {copied ? "Copied!" : "Copy"}
               </button>
               <button onClick={download} style={{ flex:1, padding:"9px 6px", border:"1px solid #e5e7eb", borderRadius:"10px", background:"#f0fdf4", color:"#059669", fontSize:"12px", fontWeight:"600", cursor:"pointer" }}>
-                Télécharger .TXT
+                Download .TXT
               </button>
             </div>
           )}

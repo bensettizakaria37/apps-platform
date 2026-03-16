@@ -20,7 +20,7 @@ export default function PdfToDocx() {
   const [file, setFile]         = useState(null);
   const [drag, setDrag]         = useState(false);
   const [status, setStatus]     = useState("idle");
-  const [uploadPct, setUploadPct] = useState(0);
+  const [uploadPct, setUploading...] = useState(0);
   const [speed, setSpeed]       = useState(0);
   const [timeLeft, setTimeLeft] = useState(null);
   const [convProgress, setConvProgress] = useState(0);
@@ -33,7 +33,7 @@ export default function PdfToDocx() {
 
   const handleFile = (f) => {
     if (!f?.name.toLowerCase().endsWith(".pdf")) { setError("Veuillez sélectionner un fichier PDF."); return; }
-    if (f.size > 50 * 1024 * 1024) { setError("Fichier trop volumineux. Maximum 50MB."); return; }
+    if (f.size > 50 * 1024 * 1024) { setError("File too large. Maximum 50MB."); return; }
     setFile(f); setError(""); setStatus("idle"); setDownloadUrl(null);
   };
 
@@ -51,12 +51,12 @@ export default function PdfToDocx() {
           setConvProgress(100);
         } else if (data.status === "error") {
           clearInterval(pollRef.current);
-          setError(data.error || "Erreur inconnue");
+          setError(data.error || "Error inconnue");
           setStatus("error");
         }
       } catch(e) {
         clearInterval(pollRef.current);
-        setError("Erreur de connexion");
+        setError("Error de connexion");
         setStatus("error");
       }
     }, 2000);
@@ -64,7 +64,7 @@ export default function PdfToDocx() {
 
   const convert = () => {
     if (!file) return;
-    setStatus("uploading"); setUploadPct(0); setSpeed(0); setTimeLeft(null); setError("");
+    setStatus("uploading"); setUploading...(0); setSpeed(0); setTimeLeft(null); setError("");
 
     const fd = new FormData();
     fd.append("file", file);
@@ -80,7 +80,7 @@ export default function PdfToDocx() {
       const elapsed  = (Date.now() - startTime) / 1000;
       const bps      = e.loaded / elapsed;
       const remaining = (e.total - e.loaded) / bps;
-      setUploadPct(pct);
+      setUploading...(pct);
       setSpeed(Math.round(bps));
       setTimeLeft(Math.round(remaining));
       lastLoaded = e.loaded;
@@ -95,13 +95,13 @@ export default function PdfToDocx() {
       } else {
         try {
           const e = JSON.parse(xhr.responseText);
-          setError(e.detail || "Erreur serveur");
-        } catch { setError("Erreur serveur"); }
+          setError(e.detail || "Error serveur");
+        } catch { setError("Error serveur"); }
         setStatus("error");
       }
     };
 
-    xhr.onerror = () => { setError("Erreur de connexion"); setStatus("error"); };
+    xhr.onerror = () => { setError("Error de connexion"); setStatus("error"); };
     xhr.open("POST", `${BACKEND}/pdf/convert`);
     xhr.send(fd);
   };
@@ -110,7 +110,7 @@ export default function PdfToDocx() {
     if (pollRef.current) clearInterval(pollRef.current);
     if (xhrRef.current) xhrRef.current.abort();
     setFile(null); setStatus("idle"); setDownloadUrl(null);
-    setError(""); setUploadPct(0); setConvProgress(0);
+    setError(""); setUploading...(0); setConvProgress(0);
   };
 
   const s = {
@@ -168,7 +168,7 @@ export default function PdfToDocx() {
             background: file ? "linear-gradient(135deg,#1d4ed8,#7c3aed)" : "#e5e7eb",
             color: file ? "#fff" : "#9ca3af"
           }}>
-             Convertir en DOCX
+             Convert to DOCX
           </button>
         </>
       )}
@@ -180,7 +180,7 @@ export default function PdfToDocx() {
             Téléchargement du fichier 1 sur 1
           </p>
 
-          {/* Fichier info */}
+          {/* File info */}
           <div style={{ display:"flex",alignItems:"center",gap:"10px",marginBottom:"14px" }}>
             <span style={{ fontSize:"22px" }}></span>
             <div style={{ flex:1 }}>
@@ -225,7 +225,7 @@ export default function PdfToDocx() {
 
           {/* Barre conversion */}
           <div style={{ display:"flex",justifyContent:"space-between",fontSize:"12px",color:"#6b7280",marginBottom:"6px" }}>
-            <span>Traitement en cours</span>
+            <span>Processing...</span>
             <span style={{ fontWeight:"700",color:"#7c3aed" }}>{convProgress}%</span>
           </div>
           <div style={{ background:"#e5e7eb",borderRadius:"6px",height:"10px",overflow:"hidden" }}>
@@ -257,20 +257,20 @@ export default function PdfToDocx() {
             background:"linear-gradient(135deg,#059669,#10b981)",color:"#fff",
             fontSize:"15px",fontWeight:"700",textDecoration:"none",marginBottom:"10px"
           }}>
-             Télécharger {filename}
+             Download {filename}
           </a>
 
           <button onClick={reset} style={{ ...s.btn,background:"#f3f4f6",color:"#374151",border:"1px solid #e5e7eb" }}>
-            Convertir un autre PDF
+            Convert another PDF
           </button>
         </div>
       )}
 
-      {/* Erreur hors idle */}
+      {/* Error hors idle */}
       {status === "error" && (
         <div style={{ background:"#fef2f2",border:"1px solid #fecaca",borderRadius:"12px",padding:"20px",marginTop:"16px",textAlign:"center" }}>
           <div style={{ fontSize:"36px",marginBottom:"8px" }}>❌</div>
-          <p style={{ fontWeight:"700",color:"#dc2626",margin:"0 0 4px" }}>Erreur</p>
+          <p style={{ fontWeight:"700",color:"#dc2626",margin:"0 0 4px" }}>Error</p>
           <p style={{ fontSize:"13px",color:"#dc2626",margin:"0 0 16px" }}>{error}</p>
           <button onClick={reset} style={{ ...s.btn,background:"#dc2626",color:"#fff" }}>Réessayer</button>
         </div>

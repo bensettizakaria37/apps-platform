@@ -84,12 +84,12 @@ export default function TextReplacer() {
             <input
               value={search}
               onChange={e=>setSearch(e.target.value)}
-              placeholder={opts.useRegex ? "Expression régulière..." : "Texte à rechercher..."}
+              placeholder={opts.useRegex ? "Regular expression..." : "Text to search..."}
               style={{ width:"100%",padding:"10px 12px",border:`1px solid ${error?"#fca5a5":"#e5e7eb"}`,borderRadius:"10px",fontSize:"13px",fontFamily:opts.useRegex?"monospace":"inherit",outline:"none",boxSizing:"border-box",background:"#f9fafb" }}
             />
           </div>
           <div>
-            <label style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",display:"block",marginBottom:"6px",textTransform:"uppercase",letterSpacing:"0.08em" }}>Remplacer par</label>
+            <label style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",display:"block",marginBottom:"6px",textTransform:"uppercase",letterSpacing:"0.08em" }}>Replace with</label>
             <input
               value={replace}
               onChange={e=>setReplace(e.target.value)}
@@ -107,7 +107,7 @@ export default function TextReplacer() {
           {[
             { key:"caseSensitive", label:"Sensible à la casse" },
             { key:"useRegex",      label:"Mode Regex" },
-            { key:"replaceAll",    label:"Remplacer tout" },
+            { key:"replaceAll",    label:"Replace all" },
           ].map(({ key, label }) => (
             <label key={key} style={{ display:"flex",alignItems:"center",gap:"8px",cursor:"pointer",fontSize:"13px",color:"#374151" }}>
               <div onClick={()=>toggle(key)} style={{ width:"36px",height:"20px",borderRadius:"10px",background:opts[key]?"#ea580c":"#d1d5db",position:"relative",cursor:"pointer",transition:"background 0.2s" }}>
@@ -125,7 +125,7 @@ export default function TextReplacer() {
         {/* Input */}
         <div style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"16px",padding:"20px",display:"flex",flexDirection:"column" }}>
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px" }}>
-            <p style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em" }}>Texte source</p>
+            <p style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em" }}>Source text</p>
             <span style={{ fontSize:"11px",color:"#9ca3af" }}>{input.length} caractères</span>
           </div>
           <textarea
@@ -140,15 +140,15 @@ export default function TextReplacer() {
               background:"linear-gradient(135deg,#ea580c,#d97706)",color:"#fff",
               fontSize:"13px",fontWeight:"700",cursor:input.trim()&&search?"pointer":"not-allowed",
               opacity:input.trim()&&search?1:0.5
-            }}>Remplacer</button>
-            <button onClick={reset} style={{ flex:1,padding:"11px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#f9fafb",color:"#6b7280",fontSize:"13px",fontWeight:"600",cursor:"pointer" }}>Effacer</button>
+            }}>Replace</button>
+            <button onClick={reset} style={{ flex:1,padding:"11px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#f9fafb",color:"#6b7280",fontSize:"13px",fontWeight:"600",cursor:"pointer" }}>Clear</button>
           </div>
         </div>
 
         {/* Output */}
         <div style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"16px",padding:"20px",display:"flex",flexDirection:"column" }}>
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px" }}>
-            <p style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em" }}>Résultat</p>
+            <p style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em" }}>Result</p>
             {stats && <span style={{ fontSize:"11px",color:"#9ca3af" }}>{stats.replaced} remplacement(s)</span>}
           </div>
           <textarea
@@ -175,10 +175,10 @@ export default function TextReplacer() {
           {output && (
             <div style={{ display:"flex",gap:"8px",marginTop:"12px" }}>
               <button onClick={copy} style={{ flex:1,padding:"9px 6px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#eff6ff",color:"#1d4ed8",fontSize:"12px",fontWeight:"600",cursor:"pointer" }}>
-                {copied?"Copié !":"Copier"}
+                {copied?"Copied!":"Copy"}
               </button>
               <button onClick={download} style={{ flex:1,padding:"9px 6px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#fff7ed",color:"#ea580c",fontSize:"12px",fontWeight:"600",cursor:"pointer" }}>
-                Télécharger .TXT
+                Download .TXT
               </button>
             </div>
           )}

@@ -174,7 +174,7 @@ export default function Secret() {
               background: copied ? "linear-gradient(135deg,#059669,#10b981)" : "linear-gradient(135deg,#1d4ed8,#7c3aed)",
               color:"#fff", marginBottom:"10px"
             }}>
-              {copied ? "✅ Lien copié !" : "📋 Copier le lien"}
+              {copied ? "✅ Lien copié !" : "📋 Copy link"}
             </button>
 
             <button onClick={reset} style={{ ...s.btn, background:"#f3f4f6", color:"#374151" }}>
@@ -237,7 +237,7 @@ export default function Secret() {
               background: copiedSecret ? "linear-gradient(135deg,#059669,#10b981)" : "linear-gradient(135deg,#1d4ed8,#7c3aed)",
               color:"#fff", marginBottom:"10px"
             }}>
-              {copiedSecret ? "✅ Copié !" : "📋 Copier le secret"}
+              {copiedSecret ? "✅ Copied!" : "📋 Copy secret"}
             </button>
 
             <button onClick={()=>{setRevealed("");setSecretId("");setTab("create");}} style={{ ...s.btn, background:"#f3f4f6", color:"#374151" }}>

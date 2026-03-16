@@ -111,8 +111,8 @@ export default function CsrDecoder() {
               background:"linear-gradient(135deg,#0ea5e9,#1d4ed8)",color:"#fff",
               fontSize:"13px",fontWeight:"700",cursor:input.trim()?"pointer":"not-allowed",
               opacity:input.trim()?1:0.5
-            }}>Décoder le CSR</button>
-            <button onClick={reset} style={{ flex:1,padding:"11px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#f9fafb",color:"#6b7280",fontSize:"13px",fontWeight:"600",cursor:"pointer" }}>Effacer</button>
+            }}>Decode CSR</button>
+            <button onClick={reset} style={{ flex:1,padding:"11px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#f9fafb",color:"#6b7280",fontSize:"13px",fontWeight:"600",cursor:"pointer" }}>Clear</button>
           </div>
         </div>
 
@@ -152,14 +152,14 @@ export default function CsrDecoder() {
               {/* Clé & Signature */}
               <p style={{ fontSize:"11px",fontWeight:"700",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em",margin:"16px 0 4px" }}>Clé & Signature</p>
               <Field label="Type de clé"         value={result.keyType} />
-              <Field label="Taille de clé"       value={`${result.keySize} bits`} />
+              <Field label="Key size"       value={`${result.keySize} bits`} />
               <Field label="Algorithme signature" value={result.sigAlg} />
             </div>
           )}
 
           {result && (
             <button onClick={copy} style={{ marginTop:"12px",padding:"9px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#eff6ff",color:"#1d4ed8",fontSize:"12px",fontWeight:"600",cursor:"pointer" }}>
-              {copied ? "Copié !" : "Copier les informations"}
+              {copied ? "Copied!" : "Copy les informations"}
             </button>
           )}
         </div>

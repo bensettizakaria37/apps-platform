@@ -76,7 +76,7 @@ export default function RemoveLines() {
         <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"8px" }}>
           <div style={{ width:"40px",height:"40px",borderRadius:"10px",background:"#fdf2f8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"20px" }}><AppIcon id="removelines" size={40} /></div>
           <div>
-            <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>Supprimer les lignes contenant</h2>
+            <h2 style={{ fontSize:"20px",fontWeight:"700",color:"#111827" }}>Remove lines containing</h2>
             <p style={{ fontSize:"13px",color:"#6b7280" }}>Filtrez et supprimez les lignes qui contiennent un mot-clé ou une expression</p>
           </div>
         </div>
@@ -86,7 +86,7 @@ export default function RemoveLines() {
       <div style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"14px",padding:"20px",marginBottom:"20px" }}>
         <div style={{ marginBottom:"16px" }}>
           <label style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",display:"block",marginBottom:"6px",textTransform:"uppercase",letterSpacing:"0.08em" }}>
-            {opts.invert ? "Garder les lignes contenant" : "Supprimer les lignes contenant"}
+            {opts.invert ? "Keep lines containing" : "Remove lines containing"}
           </label>
           <input
             value={keyword}
@@ -103,7 +103,7 @@ export default function RemoveLines() {
           {[
             { key:"caseSensitive", label:"Sensible à la casse" },
             { key:"useRegex",      label:"Mode Regex" },
-            { key:"removeEmpty",   label:"Supprimer lignes vides" },
+            { key:"removeEmpty",   label:"Remove empty lines" },
             { key:"invert",        label:"Inverser (garder)" },
           ].map(({ key, label }) => (
             <label key={key} style={{ display:"flex",alignItems:"center",gap:"8px",cursor:"pointer",fontSize:"13px",color:"#374151" }}>
@@ -122,7 +122,7 @@ export default function RemoveLines() {
         {/* Input */}
         <div style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"16px",padding:"20px",display:"flex",flexDirection:"column" }}>
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px" }}>
-            <p style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em" }}>Texte source</p>
+            <p style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em" }}>Source text</p>
             <span style={{ fontSize:"11px",color:"#9ca3af" }}>{input.split("\n").length} lignes</span>
           </div>
           <textarea
@@ -138,16 +138,16 @@ export default function RemoveLines() {
               fontSize:"13px",fontWeight:"700",cursor:input.trim()&&(keyword||opts.removeEmpty)?"pointer":"not-allowed",
               opacity:input.trim()&&(keyword||opts.removeEmpty)?1:0.5
             }}>
-              {opts.invert ? "Garder les lignes" : "Supprimer les lignes"}
+              {opts.invert ? "Keep lines" : "Remove lines"}
             </button>
-            <button onClick={reset} style={{ flex:1,padding:"11px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#f9fafb",color:"#6b7280",fontSize:"13px",fontWeight:"600",cursor:"pointer" }}>Effacer</button>
+            <button onClick={reset} style={{ flex:1,padding:"11px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#f9fafb",color:"#6b7280",fontSize:"13px",fontWeight:"600",cursor:"pointer" }}>Clear</button>
           </div>
         </div>
 
         {/* Output */}
         <div style={{ background:"#fff",border:"1px solid #e5e7eb",borderRadius:"16px",padding:"20px",display:"flex",flexDirection:"column" }}>
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px" }}>
-            <p style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em" }}>Résultat</p>
+            <p style={{ fontSize:"12px",fontWeight:"600",color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em" }}>Result</p>
             {stats && <span style={{ fontSize:"11px",color:"#9ca3af" }}>{stats.kept} lignes conservées</span>}
           </div>
           <textarea
@@ -175,10 +175,10 @@ export default function RemoveLines() {
           {output && (
             <div style={{ display:"flex",gap:"8px",marginTop:"12px" }}>
               <button onClick={copy} style={{ flex:1,padding:"9px 6px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#eff6ff",color:"#1d4ed8",fontSize:"12px",fontWeight:"600",cursor:"pointer" }}>
-                {copied?"Copié !":"Copier"}
+                {copied?"Copied!":"Copy"}
               </button>
               <button onClick={download} style={{ flex:1,padding:"9px 6px",border:"1px solid #e5e7eb",borderRadius:"10px",background:"#fdf4ff",color:"#9333ea",fontSize:"12px",fontWeight:"600",cursor:"pointer" }}>
-                Télécharger .TXT
+                Download .TXT
               </button>
             </div>
           )}
