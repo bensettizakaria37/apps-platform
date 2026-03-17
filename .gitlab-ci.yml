@@ -30,8 +30,8 @@ deploy-staging:
   before_script:
     - apk add --no-cache curl
   script:
-    - curl -s -X POST "$EASYPANEL_BACKEND_STAGING_WEBHOOK" -H "Content-Type: application/json"
-    - curl -s -X POST "$EASYPANEL_FRONTEND_STAGING_WEBHOOK" -H "Content-Type: application/json"
+    - curl -s -X POST "${EASYPANEL_BACKEND_STAGING_WEBHOOK}" -H "Content-Type: application/json"
+    - curl -s -X POST "${EASYPANEL_FRONTEND_STAGING_WEBHOOK}" -H "Content-Type: application/json"
   needs:
     - test-backend
     - test-frontend
@@ -44,8 +44,8 @@ deploy-prod:
   before_script:
     - apk add --no-cache curl
   script:
-    - curl -s -X POST "$EASYPANEL_BACKEND_WEBHOOK" -H "Content-Type: application/json"
-    - curl -s -X POST "$EASYPANEL_FRONTEND_WEBHOOK" -H "Content-Type: application/json"
+    - curl -s -X POST "${EASYPANEL_BACKEND_WEBHOOK}" -H "Content-Type: application/json"
+    - curl -s -X POST "${EASYPANEL_FRONTEND_WEBHOOK}" -H "Content-Type: application/json"
   needs:
     - test-backend
     - test-frontend
