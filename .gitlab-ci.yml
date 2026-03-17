@@ -1,42 +1,53 @@
 stages:
   - test
-  - deploy
-
-variables:
-  PYTHON_VERSION: "3.11"
+  - deploy-staging
+  - deploy-prod
 
 test-backend:
   stage: test
   image: python:3.11-slim
   before_script:
-    - pip install -r backend/requirements.txt --break-system-packages || pip install -r backend/requirements.txt
+    - apt-get update -q && apt-get install -y tesseract-ocr poppler-utils ghostscript
+    - pip install -r backend/requirements.txt
   script:
     - cd backend
-    - python -m pytest tests/ -v
-  only:
-    - main
+    - python3 -m pytest tests/ -v --tb=short
+  variables:
+    DATABASE_URL: ""
+    FERNET_KEY: "MYzePYVJA1zqPQxRMvhYbSxlJ-QbWsae2zGkg6yJJX0="
 
 test-frontend:
   stage: test
   image: node:20-alpine
   before_script:
-    - cd frontend
-    - npm install
+    - cd frontend && npm install
   script:
     - npm run build
-  only:
-    - main
 
-deploy:
-  stage: deploy
+deploy-staging:
+  stage: deploy-staging
   image: alpine:latest
   before_script:
     - apk add --no-cache curl
   script:
-    - curl -s -X POST "$EASYPANEL_BACKEND_WEBHOOK"
-    - curl -s -X POST "http://169.255.179.10:3000/api/deploy/a2dcf2aa2d321cd846065303f57fa9ae6afd43837f76c133"
-  only:
-    - main
+    - curl -s -X POST "$EASYPANEL_BACKEND_STAGING_WEBHOOK" -H "Content-Type: application/json"
+    - curl -s -X POST "$EASYPANEL_FRONTEND_STAGING_WEBHOOK" -H "Content-Type: application/json"
   needs:
     - test-backend
     - test-frontend
+  only:
+    - staging
+
+deploy-prod:
+  stage: deploy-prod
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - curl -s -X POST "$EASYPANEL_BACKEND_WEBHOOK" -H "Content-Type: application/json"
+    - curl -s -X POST "$EASYPANEL_FRONTEND_WEBHOOK" -H "Content-Type: application/json"
+  needs:
+    - test-backend
+    - test-frontend
+  only:
+    - main
