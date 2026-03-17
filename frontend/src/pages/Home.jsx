@@ -2,7 +2,7 @@ import AppIcon from "../components/AppIcon";
 
 const APPS = [
   { id:"pdf",         title:"PDF to DOCX",             desc:"Convert your PDFs into editable Word documents in one click." },
-  { id:"ocr",         title:"OCR — Image to Text",     desc:"Extract text from any image or scanned PDF. FR, EN, AR." },
+  { id:"ocr",         title:"OCR : Image to Text",     desc:"Extract text from any image or scanned PDF. FR, EN, AR." },
   { id:"compress",    title:"Compress PDF",             desc:"Reduce the size of your PDFs without visible quality loss." },
   { id:"duplicates",  title:"Remove Duplicate Lines",  desc:"Remove duplicate lines from any text instantly." },
   { id:"removelines", title:"Remove Lines Containing", desc:"Filter and remove lines that contain a keyword or expression." },
