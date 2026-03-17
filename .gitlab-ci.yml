@@ -34,7 +34,7 @@ deploy:
     - apk add --no-cache curl
   script:
     - curl -s -X POST "$EASYPANEL_BACKEND_WEBHOOK"
-    - curl -s -X POST "$EASYPANEL_FRONTEND_WEBHOOK"
+    - curl -s -X POST "http://169.255.179.10:3000/api/deploy/a2dcf2aa2d321cd846065303f57fa9ae6afd43837f76c133"
   only:
     - main
   needs:
