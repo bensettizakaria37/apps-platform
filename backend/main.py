@@ -747,3 +747,177 @@ async def dns_check(domain: str):
         check("WWW Record", "warn", f"No www record: {str(e)}")
 
     return {"domain": domain, "results": results}
+
+@app.get("/dns-check-advanced")
+async def dns_check_advanced(domain: str):
+    import ipaddress
+    results = []
+    resolver = dns.resolver.Resolver()
+    resolver.timeout = 5
+    resolver.lifetime = 5
+
+    def check(category, name, status, info):
+        results.append({"category": category, "name": name, "status": status, "info": info})
+
+    # ── NS Records ──────────────────────────────────────────────────────────
+    ns_list = []
+    ns_ips = []
+    try:
+        ns_records = resolver.resolve(domain, "NS")
+        ns_list = [str(r).rstrip(".") for r in ns_records]
+        check("NS", "NS Records", "pass", f"Found {len(ns_list)} nameserver(s): {', '.join(ns_list)}")
+
+        # NS count check
+        if len(ns_list) < 2:
+            check("NS", "Multiple Nameservers", "warn", "You should have at least 2 nameservers for redundancy")
+        else:
+            check("NS", "Multiple Nameservers", "pass", f"Good. You have {len(ns_list)} nameservers")
+
+        # NS A records
+        subnets = []
+        for ns in ns_list:
+            try:
+                a = resolver.resolve(ns, "A")
+                ips = [str(r) for r in a]
+                ns_ips.extend(ips)
+                for ip in ips:
+                    net = ".".join(ip.split(".")[:2])
+                    subnets.append(net)
+                check("NS", f"NS A Record ({ns})", "pass", f"IP(s): {', '.join(ips)}")
+            except Exception as e:
+                check("NS", f"NS A Record ({ns})", "fail", str(e))
+
+        # Different subnets
+        if len(set(subnets)) > 1:
+            check("NS", "Different Subnets", "pass", "Nameservers are on different subnets")
+        else:
+            check("NS", "Different Subnets", "warn", "All nameservers are on the same subnet — single point of failure")
+
+        # Public IPs
+        all_public = all(not ipaddress.ip_address(ip).is_private for ip in ns_ips)
+        if all_public:
+            check("NS", "Public NS IPs", "pass", "All nameserver IPs are public")
+        else:
+            check("NS", "Public NS IPs", "fail", "Some nameserver IPs are private")
+
+    except Exception as e:
+        check("NS", "NS Records", "fail", str(e))
+
+    # ── SOA Record ──────────────────────────────────────────────────────────
+    try:
+        soa = resolver.resolve(domain, "SOA")
+        for r in soa:
+            check("SOA", "SOA Record", "pass", f"Primary NS: {r.mname} | Hostmaster: {r.rname}")
+            check("SOA", "SOA Serial", "pass", f"Serial: {r.serial} (format YYYYMMDDnn)")
+
+            if r.refresh >= 3600:
+                check("SOA", "SOA Refresh", "pass", f"Refresh: {r.refresh}s — OK")
+            else:
+                check("SOA", "SOA Refresh", "warn", f"Refresh: {r.refresh}s — too low, recommended ≥ 3600s")
+
+            if r.retry >= 900:
+                check("SOA", "SOA Retry", "pass", f"Retry: {r.retry}s — OK")
+            else:
+                check("SOA", "SOA Retry", "warn", f"Retry: {r.retry}s — too low, recommended ≥ 900s")
+
+            if r.expire >= 604800:
+                check("SOA", "SOA Expire", "pass", f"Expire: {r.expire}s ({r.expire//86400} days) — OK")
+            else:
+                check("SOA", "SOA Expire", "warn", f"Expire: {r.expire}s — too low, recommended ≥ 604800s (7 days)")
+
+            if 300 <= r.minimum <= 10800:
+                check("SOA", "SOA Minimum TTL", "pass", f"TTL: {r.minimum}s — OK")
+            else:
+                check("SOA", "SOA Minimum TTL", "warn", f"TTL: {r.minimum}s — recommended between 300 and 10800s")
+
+    except Exception as e:
+        check("SOA", "SOA Record", "fail", str(e))
+
+    # ── A Record ──────────────────────────────────────────────────────────
+    try:
+        a = resolver.resolve(domain, "A")
+        ips = [str(r) for r in a]
+        check("WWW", "A Record", "pass", f"{domain} → {', '.join(ips)}")
+        all_public = all(not ipaddress.ip_address(ip).is_private for ip in ips)
+        check("WWW", "Public IPs", "pass" if all_public else "fail",
+              "All IPs are public" if all_public else "Some IPs are private")
+    except Exception as e:
+        check("WWW", "A Record", "fail", str(e))
+
+    # ── AAAA ──────────────────────────────────────────────────────────────
+    try:
+        aaaa = resolver.resolve(domain, "AAAA")
+        ips6 = [str(r) for r in aaaa]
+        check("WWW", "AAAA Record (IPv6)", "pass", f"IPv6: {', '.join(ips6)}")
+    except:
+        check("WWW", "AAAA Record (IPv6)", "info", "No IPv6 records — not required but recommended")
+
+    # ── WWW Record ──────────────────────────────────────────────────────────
+    try:
+        www = resolver.resolve(f"www.{domain}", "A")
+        www_ips = [str(r) for r in www]
+        check("WWW", "WWW Record", "pass", f"www.{domain} → {', '.join(www_ips)}")
+    except Exception as e:
+        check("WWW", "WWW Record", "warn", f"No www record found")
+
+    # ── MX Records ──────────────────────────────────────────────────────────
+    try:
+        mx = resolver.resolve(domain, "MX")
+        mx_list = sorted([(r.preference, str(r.exchange).rstrip(".")) for r in mx])
+        check("MX", "MX Records", "pass", f"Found {len(mx_list)} mail server(s)")
+
+        for pref, exch in mx_list:
+            try:
+                mx_a = resolver.resolve(exch, "A")
+                mx_ips = [str(r) for r in mx_a]
+                check("MX", f"MX {exch}", "pass", f"Priority {pref} → {', '.join(mx_ips)}")
+
+                # PTR check
+                for ip in mx_ips[:1]:
+                    try:
+                        rev = dns.reversename.from_address(ip)
+                        ptr = resolver.resolve(rev, "PTR")
+                        check("MX", f"PTR for {ip}", "pass", f"{ip} → {str(list(ptr)[0])}")
+                    except:
+                        check("MX", f"PTR for {ip}", "warn", f"No reverse DNS for {ip}")
+            except Exception as e:
+                check("MX", f"MX {exch}", "warn", str(e))
+
+    except Exception as e:
+        check("MX", "MX Records", "warn", "No MX records found — cannot receive emails")
+
+    # ── TXT / SPF / DMARC ──────────────────────────────────────────────────
+    try:
+        txt = resolver.resolve(domain, "TXT")
+        txt_list = [str(r).strip('"') for r in txt]
+        check("TXT", "TXT Records", "pass", f"Found {len(txt_list)} TXT record(s)")
+
+        spf = [t for t in txt_list if t.startswith("v=spf1")]
+        if spf:
+            check("TXT", "SPF Record", "pass", spf[0])
+        else:
+            check("TXT", "SPF Record", "warn", "No SPF record — emails may be marked as spam")
+
+    except Exception as e:
+        check("TXT", "TXT Records", "fail", str(e))
+
+    # DMARC
+    try:
+        dmarc = resolver.resolve(f"_dmarc.{domain}", "TXT")
+        dmarc_list = [str(r).strip('"') for r in dmarc]
+        check("TXT", "DMARC Record", "pass", dmarc_list[0] if dmarc_list else "Found")
+    except:
+        check("TXT", "DMARC Record", "warn", "No DMARC record — recommended for email security")
+
+    # DKIM (common selector)
+    for selector in ["default", "google", "mail", "dkim"]:
+        try:
+            dkim = resolver.resolve(f"{selector}._domainkey.{domain}", "TXT")
+            check("TXT", "DKIM Record", "pass", f"DKIM found with selector '{selector}'")
+            break
+        except:
+            pass
+    else:
+        check("TXT", "DKIM Record", "info", "No common DKIM selector found (default/google/mail/dkim)")
+
+    return {"domain": domain, "results": results}
