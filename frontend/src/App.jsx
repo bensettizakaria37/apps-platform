@@ -13,6 +13,7 @@ import CertificateDecoder from "./pages/CertificateDecoder";
 import WhoisLookup from "./pages/WhoisLookup";
 import GeoPeeker from "./pages/GeoPeeker";
 import EmailHeader from "./pages/EmailHeader";
+import DnsLookup from "./pages/DnsLookup";
 
 export default function App() {
   const getPage = () => new URLSearchParams(window.location.search).get("page") || "home";
@@ -66,6 +67,7 @@ export default function App() {
         {page==="whois"       && <WhoisLookup />}
         {page==="geopeeker"   && <GeoPeeker />}
         {page==="emailheader" && <EmailHeader />}
+        {page==="dnslookup" && <DnsLookup />}
       </div>
     </div>
   );
