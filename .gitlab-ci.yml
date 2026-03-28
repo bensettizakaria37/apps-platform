@@ -8,6 +8,7 @@ variables:
   FRONTEND_IMAGE: registry.gitlab.cloudfactory.ma/root/apps-platform/frontend:latest
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
 
 test-backend:
   stage: test
@@ -35,6 +36,7 @@ build-backend:
   services:
     - name: docker:24-dind
       alias: docker
+      command: ["--insecure-registry=registry.gitlab.cloudfactory.ma"]
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
@@ -49,6 +51,7 @@ build-frontend:
   services:
     - name: docker:24-dind
       alias: docker
+      command: ["--insecure-registry=registry.gitlab.cloudfactory.ma"]
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
