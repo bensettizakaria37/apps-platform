@@ -1,7 +1,15 @@
 stages:
   - test
+  - build
   - deploy-staging
   - deploy-prod
+
+variables:
+  BACKEND_IMAGE: registry.gitlab.cloudfactory.ma/root/apps-platform/backend:latest
+  FRONTEND_IMAGE: registry.gitlab.cloudfactory.ma/root/apps-platform/frontend:latest
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
 
 test-backend:
   stage: test
@@ -10,8 +18,7 @@ test-backend:
     - apt-get update -q && apt-get install -y tesseract-ocr poppler-utils ghostscript
     - pip install -r backend/requirements.txt
   script:
-    - cd backend
-    - python3 -m pytest tests/ -v --tb=short
+    - cd backend && python3 -m pytest tests/ -v --tb=short
   variables:
     DATABASE_URL: ""
     FERNET_KEY: "MYzePYVJA1zqPQxRMvhYbSxlJ-QbWsae2zGkg6yJJX0="
@@ -24,17 +31,50 @@ test-frontend:
   script:
     - npm run build
 
+build-backend:
+  stage: build
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+      command: ["--insecure-registry=registry.gitlab.cloudfactory.ma"]
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -f Dockerfile.backend -t $BACKEND_IMAGE .
+    - docker push $BACKEND_IMAGE
+  only:
+    - main
+    - staging
+
+build-frontend:
+  stage: build
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+      command: ["--insecure-registry=registry.gitlab.cloudfactory.ma"]
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -f Dockerfile.frontend -t $FRONTEND_IMAGE .
+    - docker push $FRONTEND_IMAGE
+  only:
+    - main
+    - staging
+
 deploy-staging:
   stage: deploy-staging
   image: alpine:latest
   before_script:
     - apk add --no-cache curl
+    - curl -LO "https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl"
+    - chmod +x kubectl && mv kubectl /usr/local/bin/
+    - mkdir -p ~/.kube
+    - echo "$KUBECONFIG_CONTENT" | base64 -d > ~/.kube/config
   script:
-    - curl -s -X POST $EASYPANEL_BACKEND_STAGING_WEBHOOK
-    - curl -s -X POST $EASYPANEL_FRONTEND_STAGING_WEBHOOK
-  needs:
-    - test-backend
-    - test-frontend
+    - kubectl rollout restart deployment/backend -n apps-platform
+    - kubectl rollout restart deployment/frontend -n apps-platform
   only:
     - staging
 
@@ -43,11 +83,14 @@ deploy-prod:
   image: alpine:latest
   before_script:
     - apk add --no-cache curl
+    - curl -LO "https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl"
+    - chmod +x kubectl && mv kubectl /usr/local/bin/
+    - mkdir -p ~/.kube
+    - echo "$KUBECONFIG_CONTENT" | base64 -d > ~/.kube/config
   script:
-    - curl -s -X POST $EASYPANEL_BACKEND_WEBHOOK
-    - curl -s -X POST $EASYPANEL_FRONTEND_WEBHOOK
-  needs:
-    - test-backend
-    - test-frontend
+    - kubectl rollout restart deployment/backend -n apps-platform
+    - kubectl rollout restart deployment/frontend -n apps-platform
+    - kubectl rollout status deployment/backend -n apps-platform
+    - kubectl rollout status deployment/frontend -n apps-platform
   only:
     - main
