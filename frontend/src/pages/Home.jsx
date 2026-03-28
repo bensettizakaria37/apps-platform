@@ -12,6 +12,7 @@ const APPS = [
   { id:"csr",         title:"CSR Decoder",             desc:"Decode and inspect your Certificate Signing Requests." },
   { id:"certdecoder", title:"Certificate Decoder",     desc:"Decode and inspect any X.509 SSL/TLS certificate." },
   { id:"whois",       title:"Who.is Lookup",           desc:"Get registration and ownership details for any domain." },
+  { id:"dnshealth",   title:"DNS Health Check",        desc:"Analyze DNS configuration, NS, SOA, MX, SPF, DMARC and detect issues." },
   { id:"dnslookup",   title:"DNS Lookup",              desc:"Query DNS records (A, MX, TXT, NS...) for any domain instantly." },
   { id:"emailheader",  title:"Email Header Analyzer",  desc:"Analyze email headers to trace origin, routing, and detect spoofing." },
   { id:"geopeeker",   title:"GeoPeeker",               desc:"See how your website responds from different locations worldwide." },

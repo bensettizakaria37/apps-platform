@@ -14,6 +14,7 @@ import WhoisLookup from "./pages/WhoisLookup";
 import GeoPeeker from "./pages/GeoPeeker";
 import EmailHeader from "./pages/EmailHeader";
 import DnsLookup from "./pages/DnsLookup";
+import DnsHealth from "./pages/DnsHealth";
 
 export default function App() {
   const getPage = () => new URLSearchParams(window.location.search).get("page") || "home";
@@ -68,6 +69,7 @@ export default function App() {
         {page==="geopeeker"   && <GeoPeeker />}
         {page==="emailheader" && <EmailHeader />}
         {page==="dnslookup" && <DnsLookup />}
+        {page==="dnshealth" && <DnsHealth />}
       </div>
     </div>
   );

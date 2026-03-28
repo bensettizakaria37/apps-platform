@@ -662,3 +662,88 @@ async def take_screenshot(url: str, location: str = "us"):
                 raise HTTPException(status_code=400, detail=f"Screenshot API error: {r.status_code}")
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# ── DNS Health Check ──────────────────────────────────────────────────────────
+import dns.resolver
+import dns.query
+import dns.zone
+import dns.name
+
+@app.get("/dns-check")
+async def dns_check(domain: str):
+    results = []
+    resolver = dns.resolver.Resolver()
+    resolver.timeout = 5
+    resolver.lifetime = 5
+
+    def check(name, status, info):
+        results.append({"name": name, "status": status, "info": info})
+
+    # NS Records
+    try:
+        ns = resolver.resolve(domain, "NS")
+        ns_list = [str(r) for r in ns]
+        check("NS Records", "pass", f"Found {len(ns_list)} nameserver(s): {', '.join(ns_list)}")
+    except Exception as e:
+        check("NS Records", "fail", str(e))
+        ns_list = []
+
+    # SOA Record
+    try:
+        soa = resolver.resolve(domain, "SOA")
+        for r in soa:
+            check("SOA Record", "pass", f"Primary NS: {r.mname} | Serial: {r.serial} | Refresh: {r.refresh}s | TTL: {r.minimum}")
+    except Exception as e:
+        check("SOA Record", "fail", str(e))
+
+    # A Record
+    try:
+        a = resolver.resolve(domain, "A")
+        ips = [str(r) for r in a]
+        check("A Record", "pass", f"IP(s): {', '.join(ips)}")
+    except Exception as e:
+        check("A Record", "fail", str(e))
+
+    # AAAA Record
+    try:
+        aaaa = resolver.resolve(domain, "AAAA")
+        ips6 = [str(r) for r in aaaa]
+        check("AAAA Record", "pass", f"IPv6: {', '.join(ips6)}")
+    except Exception as e:
+        check("AAAA Record", "info", "No IPv6 records found")
+
+    # MX Records
+    try:
+        mx = resolver.resolve(domain, "MX")
+        mx_list = [f"{r.preference} {r.exchange}" for r in mx]
+        check("MX Records", "pass", f"Mail server(s): {', '.join(mx_list)}")
+    except Exception as e:
+        check("MX Records", "warn", "No MX records found")
+
+    # TXT Records
+    try:
+        txt = resolver.resolve(domain, "TXT")
+        txt_list = [str(r) for r in txt]
+        spf = [t for t in txt_list if "spf1" in t]
+        dmarc_ok = any("v=DMARC1" in t for t in txt_list)
+        check("TXT Records", "pass", f"Found {len(txt_list)} TXT record(s)")
+        if spf:
+            check("SPF Record", "pass", f"{spf[0]}")
+        else:
+            check("SPF Record", "warn", "No SPF record found — emails may be marked as spam")
+        if dmarc_ok:
+            check("DMARC Record", "pass", "DMARC record found")
+        else:
+            check("DMARC Record", "warn", "No DMARC record found")
+    except Exception as e:
+        check("TXT Records", "fail", str(e))
+
+    # WWW
+    try:
+        www = resolver.resolve(f"www.{domain}", "A")
+        www_ips = [str(r) for r in www]
+        check("WWW Record", "pass", f"www.{domain} → {', '.join(www_ips)}")
+    except Exception as e:
+        check("WWW Record", "warn", f"No www record: {str(e)}")
+
+    return {"domain": domain, "results": results}
