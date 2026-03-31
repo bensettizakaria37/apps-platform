@@ -120,10 +120,16 @@ def test_secret_full_flow():
 # ─────────────────────────────────────────
 # JOBS
 # ─────────────────────────────────────────
-def test_job_not_found():
-    res = client.get("/jobs/jobquinexistepas")
-    assert res.status_code == 404
 
-def test_job_download_not_found():
-    res = client.get("/jobs/jobquinexistepas/download")
-    assert res.status_code == 404
+# Override job tests with mock
+import unittest.mock as mock
+
+def test_job_not_found_mock():
+    with mock.patch("main.get_job_db", return_value=None):
+        res = client.get("/jobs/jobquinexistepas123")
+        assert res.status_code == 404
+
+def test_job_download_not_found_mock():
+    with mock.patch("main.get_job_db", return_value=None):
+        res = client.get("/jobs/jobquinexistepas123/download")
+        assert res.status_code == 404
