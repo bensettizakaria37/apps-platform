@@ -53,32 +53,62 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 # ─────────────────────────────────────────
 # JOBS STORE (en mémoire)
 # ─────────────────────────────────────────
-# { job_id: { status, progress, result_path, filename, error, created_at } }
-JOBS = {}
-
+# Jobs stored in PostgreSQL (shared across pods)
 def create_job():
     job_id = str(uuid.uuid4()).replace("-","")[:16]
-    JOBS[job_id] = {
-        "status": "pending",
-        "progress": 0,
-        "result_path": None,
-        "filename": None,
-        "error": None,
-        "created_at": datetime.utcnow()
-    }
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO jobs (id, status, progress, result_path, filename, error, created_at)
+        VALUES (%s, 'pending', 0, NULL, NULL, NULL, NOW())
+    """, (job_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
     return job_id
+
+def update_job(job_id, **kwargs):
+    if not kwargs:
+        return
+    fields = ", ".join(f"{k} = %s" for k in kwargs)
+    values = list(kwargs.values()) + [job_id]
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(f"UPDATE jobs SET {fields} WHERE id = %s", values)
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def get_job_db(job_id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, status, progress, result_path, filename, error FROM jobs WHERE id = %s", (job_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return None
+    return {
+        "status": row[1],
+        "progress": row[2],
+        "result_path": row[3],
+        "filename": row[4],
+        "error": row[5],
+    }
 
 def cleanup_jobs():
     """Supprimer les jobs de plus de 1 heure"""
-    now = datetime.utcnow()
-    to_delete = []
-    for job_id, job in JOBS.items():
-        if (now - job["created_at"]).seconds > 3600:
-            if job["result_path"] and os.path.exists(job["result_path"]):
-                os.remove(job["result_path"])
-            to_delete.append(job_id)
-    for job_id in to_delete:
-        del JOBS[job_id]
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, result_path FROM jobs WHERE created_at < NOW() - INTERVAL '1 hour'")
+    rows = cur.fetchall()
+    for row in rows:
+        if row[1] and os.path.exists(row[1]):
+            os.remove(row[1])
+    cur.execute("DELETE FROM jobs WHERE created_at < NOW() - INTERVAL '1 hour'")
+    conn.commit()
+    cur.close()
+    conn.close()
 
 # ─────────────────────────────────────────
 # DATABASE
@@ -92,6 +122,16 @@ def init_db():
     conn = get_db()
     cur  = conn.cursor()
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS jobs (
+            id          TEXT PRIMARY KEY,
+            status      TEXT DEFAULT 'pending',
+            progress    INTEGER DEFAULT 0,
+            result_path TEXT,
+            filename    TEXT,
+            error       TEXT,
+            created_at  TIMESTAMP DEFAULT NOW()
+        );
+        CREATE TABLE IF NOT EXISTS secrets (
         CREATE TABLE IF NOT EXISTS secrets (
             id          TEXT PRIMARY KEY,
             ciphertext  TEXT NOT NULL,
@@ -182,9 +222,9 @@ def health():
 # ─────────────────────────────────────────
 @app.get("/jobs/{job_id}")
 def get_job(job_id: str):
-    if job_id not in JOBS:
+    job = get_job_db(job_id)
+    if not job:
         raise HTTPException(status_code=404, detail="Job introuvable")
-    job = JOBS[job_id]
     return {
         "job_id": job_id,
         "status": job["status"],
@@ -195,9 +235,9 @@ def get_job(job_id: str):
 
 @app.get("/jobs/{job_id}/download")
 def download_job(job_id: str):
-    if job_id not in JOBS:
+    job = get_job_db(job_id)
+    if not job:
         raise HTTPException(status_code=404, detail="Job introuvable")
-    job = JOBS[job_id]
     if job["status"] != "done":
         raise HTTPException(status_code=400, detail="Job pas encore terminé")
     if not job["result_path"] or not os.path.exists(job["result_path"]):
@@ -219,28 +259,28 @@ def download_job(job_id: str):
 # PDF → DOCX (ASYNC JOB)
 # ─────────────────────────────────────────
 def process_pdf_convert(job_id: str, contents: bytes, original_filename: str):
-    job = JOBS[job_id]
+    job = get_job_db(job_id)
     tmp_id    = str(uuid.uuid4())
     pdf_path  = f"/tmp/{tmp_id}.pdf"
     docx_path = f"/tmp/{tmp_id}.docx"
     try:
-        job["progress"] = 10
+        update_job(job_id, progress=10)
         with open(pdf_path, "wb") as f:
             f.write(contents)
-        job["progress"] = 30
+        update_job(job_id, progress=30)
         cv = Converter(pdf_path)
-        job["progress"] = 50
+        update_job(job_id, progress=50)
         cv.convert(docx_path)
         cv.close()
-        job["progress"] = 90
+        update_job(job_id, progress=90)
         if not os.path.exists(docx_path):
             raise Exception("Conversion échouée")
-        job["result_path"] = docx_path
+        update_job(job_id, result_path=docx_path)
         job["filename"]    = original_filename.replace(".pdf", ".docx")
         job["status"]      = "done"
         job["progress"]    = 100
     except Exception as e:
-        job["status"] = "error"
+        update_job(job_id, status="error")
         job["error"]  = str(e)
     finally:
         if os.path.exists(pdf_path):
@@ -260,27 +300,27 @@ async def convert_pdf(request: Request, background_tasks: BackgroundTasks, file:
 # PDF COMPRESS (ASYNC JOB)
 # ─────────────────────────────────────────
 def process_pdf_compress(job_id: str, contents: bytes, original_filename: str):
-    job = JOBS[job_id]
+    job = get_job_db(job_id)
     tmp_id     = str(uuid.uuid4())
     input_path = f"/tmp/{tmp_id}_input.pdf"
     out_path   = f"/tmp/{tmp_id}_compressed.pdf"
     try:
-        job["progress"] = 10
+        update_job(job_id, progress=10)
         with open(input_path, "wb") as f:
             f.write(contents)
         original_size = os.path.getsize(input_path)
-        job["progress"] = 30
+        update_job(job_id, progress=30)
         result = subprocess.run([
             "gs", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.4",
             "-dPDFSETTINGS=/ebook", "-dNOPAUSE", "-dQUIET", "-dBATCH",
             f"-sOutputFile={out_path}", input_path
         ], capture_output=True, timeout=300)
-        job["progress"] = 90
+        update_job(job_id, progress=90)
         if result.returncode != 0 or not os.path.exists(out_path):
             raise Exception(f"Ghostscript error: {result.stderr.decode()[:200]}")
         compressed_size = os.path.getsize(out_path)
         reduction = round((1 - compressed_size / original_size) * 100, 1)
-        job["result_path"] = out_path
+        update_job(job_id, result_path=out_path)
         job["filename"]    = original_filename.replace(".pdf", "_compressed.pdf")
         job["status"]      = "done"
         job["progress"]    = 100
@@ -288,7 +328,7 @@ def process_pdf_compress(job_id: str, contents: bytes, original_filename: str):
         job["compressed_size"] = compressed_size
         job["reduction"]       = reduction
     except Exception as e:
-        job["status"] = "error"
+        update_job(job_id, status="error")
         job["error"]  = str(e)
     finally:
         if os.path.exists(input_path):
@@ -325,16 +365,16 @@ def do_ocr(file_bytes, filename, lang):
 ALLOWED_OCR = [".jpg",".jpeg",".png",".bmp",".tiff",".tif",".webp",".pdf"]
 
 def process_ocr(job_id: str, contents: bytes, filename: str, lang: str, output: str):
-    job = JOBS[job_id]
+    job = get_job_db(job_id)
     try:
-        job["progress"] = 20
+        update_job(job_id, progress=20)
         extracted = do_ocr(contents, filename, lang)
-        job["progress"] = 80
+        update_job(job_id, progress=80)
         if not extracted:
             extracted = "Aucun texte détecté."
         tmp_id = str(uuid.uuid4())
         if output == "text":
-            job["result_path"] = None
+            update_job(job_id, result_path=None)
             job["text"]        = extracted
             job["chars"]       = len(extracted)
             job["words"]       = len(extracted.split())
@@ -342,7 +382,7 @@ def process_ocr(job_id: str, contents: bytes, filename: str, lang: str, output: 
             path = f"/tmp/{tmp_id}.txt"
             with open(path, "w", encoding="utf-8") as f:
                 f.write(extracted)
-            job["result_path"] = path
+            update_job(job_id, result_path=path)
             job["filename"]    = filename.rsplit(".",1)[0]+".txt"
         elif output == "docx":
             path = f"/tmp/{tmp_id}.docx"
@@ -354,12 +394,12 @@ def process_ocr(job_id: str, contents: bytes, filename: str, lang: str, output: 
             for line in extracted.split("\n"):
                 doc.add_paragraph(line)
             doc.save(path)
-            job["result_path"] = path
+            update_job(job_id, result_path=path)
             job["filename"]    = filename.rsplit(".",1)[0]+".docx"
         job["status"]   = "done"
-        job["progress"] = 100
+        update_job(job_id, progress=100)
     except Exception as e:
-        job["status"] = "error"
+        update_job(job_id, status="error")
         job["error"]  = str(e)
 
 @app.post("/ocr")
@@ -375,9 +415,9 @@ async def ocr_file(request: Request, background_tasks: BackgroundTasks, file: Up
 
 @app.get("/jobs/{job_id}/ocr-result")
 def get_ocr_result(job_id: str):
-    if job_id not in JOBS:
+    job = get_job_db(job_id)
+    if not job:
         raise HTTPException(status_code=404, detail="Job introuvable")
-    job = JOBS[job_id]
     if job["status"] != "done":
         raise HTTPException(status_code=400, detail="Job pas encore terminé")
     return {
