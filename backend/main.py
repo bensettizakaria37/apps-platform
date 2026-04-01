@@ -276,12 +276,10 @@ def process_pdf_convert(job_id: str, contents: bytes, original_filename: str):
         if not os.path.exists(docx_path):
             raise Exception("Conversion échouée")
         update_job(job_id, result_path=docx_path)
-        job["filename"]    = original_filename.replace(".pdf", ".docx")
-        job["status"]      = "done"
-        job["progress"]    = 100
+        update_job(job_id, filename=original_filename.replace(".pdf", ".docx"))
+        update_job(job_id, status="done", progress=100)
     except Exception as e:
-        update_job(job_id, status="error")
-        job["error"]  = str(e)
+        update_job(job_id, status="error", error=str(e))
     finally:
         if os.path.exists(pdf_path):
             os.remove(pdf_path)
@@ -321,15 +319,14 @@ def process_pdf_compress(job_id: str, contents: bytes, original_filename: str):
         compressed_size = os.path.getsize(out_path)
         reduction = round((1 - compressed_size / original_size) * 100, 1)
         update_job(job_id, result_path=out_path)
-        job["filename"]    = original_filename.replace(".pdf", "_compressed.pdf")
-        job["status"]      = "done"
-        job["progress"]    = 100
+        update_job(job_id, filename=original_filename.replace(".pdf", "_compressed.pdf"))
+        update_job(job_id, status="done", progress=100)
         job["original_size"]   = original_size
         job["compressed_size"] = compressed_size
         job["reduction"]       = reduction
     except Exception as e:
         update_job(job_id, status="error")
-        job["error"]  = str(e)
+        update_job(job_id, error=str(e))
     finally:
         if os.path.exists(input_path):
             os.remove(input_path)
@@ -383,7 +380,7 @@ def process_ocr(job_id: str, contents: bytes, filename: str, lang: str, output: 
             with open(path, "w", encoding="utf-8") as f:
                 f.write(extracted)
             update_job(job_id, result_path=path)
-            job["filename"]    = filename.rsplit(".",1)[0]+".txt"
+            update_job(job_id, filename=filename.rsplit(".",1)[0]+".txt")
         elif output == "docx":
             path = f"/tmp/{tmp_id}.docx"
             doc = DocxDocument()
@@ -395,12 +392,12 @@ def process_ocr(job_id: str, contents: bytes, filename: str, lang: str, output: 
                 doc.add_paragraph(line)
             doc.save(path)
             update_job(job_id, result_path=path)
-            job["filename"]    = filename.rsplit(".",1)[0]+".docx"
-        job["status"]   = "done"
+            update_job(job_id, filename=filename.rsplit(".",1)[0]+".docx")
+        update_job(job_id, status="done")
         update_job(job_id, progress=100)
     except Exception as e:
         update_job(job_id, status="error")
-        job["error"]  = str(e)
+        update_job(job_id, error=str(e))
 
 @app.post("/ocr")
 @limiter.limit("10/minute")
