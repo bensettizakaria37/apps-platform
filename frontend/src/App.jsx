@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Home from "./pages/Home";
+import QuizGate from "./components/QuizGate";
 import PdfToDocx from "./pages/PdfToDocx";
 import Ocr from "./pages/Ocr";
 import Secret from "./pages/Secret";
@@ -30,10 +31,9 @@ export default function App() {
     window.history.pushState({}, "", `/?page=${id}`);
     setPage(id);
   };
-
-  if (page === "home") return <Home setPage={navigate} />;
-
+  if (page === "home") return <QuizGate><Home setPage={navigate} /></QuizGate>;
   return (
+    <QuizGate>
     <div style={{
       minHeight:"100vh",
       background:"radial-gradient(ellipse at 15% 15%, #d4c5f9 0%, #e8e0ff 25%, #f0e6ff 50%, #fce4f4 75%, #ffd6e8 100%)",
@@ -72,5 +72,6 @@ export default function App() {
         {page==="dnshealth" && <DnsHealth />}
       </div>
     </div>
+    </QuizGate>
   );
 }
