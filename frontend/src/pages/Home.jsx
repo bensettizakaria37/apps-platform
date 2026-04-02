@@ -28,8 +28,8 @@ export default function Home({ setPage }) {
       <div style={{ maxWidth:"960px", margin:"0 auto" }}>
 
         <div style={{ textAlign:"center", marginBottom:"56px" }}>
-          <p style={{ fontSize:"13px",fontWeight:"700",letterSpacing:"0.2em",textTransform:"uppercase",color:"#6c5ce7",marginBottom:"16px",background:"rgba(108,92,231,0.08)",padding:"6px 16px",borderRadius:"20px",display:"inline-block" }}>FACTORY-TOOLS</p>
-          <h1 style={{ fontSize:"48px",fontWeight:"800",color:"#1a1a2e",letterSpacing:"-2px",lineHeight:1.05,marginBottom:"14px" }}>
+          <p style={{ fontSize:"13px",fontWeight:"700",letterSpacing:"0.2em",textTransform:"uppercase",color:"#6c5ce7",marginBottom:"16px",background:"rgba(108,92,231,0.25)",padding:"6px 16px",borderRadius:"20px",display:"inline-block" }}>FACTORY-TOOLS</p>
+          <h1 style={{ fontSize:"48px",fontWeight:"800",color:"#f3f4f6",letterSpacing:"-2px",lineHeight:1.05,marginBottom:"14px" }}>
             Your productivity tools,<br/>
             <span style={{ background:"linear-gradient(135deg,#6c5ce7,#a29bfe,#fd79a8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent" }}>
               all in one place.
@@ -40,7 +40,7 @@ export default function Home({ setPage }) {
           </p>
         </div>
 
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", background:"rgba(255,255,255,0.7)", backdropFilter:"blur(20px)", borderRadius:"20px", border:"1px solid rgba(255,255,255,0.9)", overflow:"hidden", boxShadow:"0 4px 32px rgba(108,92,231,0.1)" }}>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", background:"rgba(255,255,255,0.05)", backdropFilter:"blur(20px)", borderRadius:"20px", border:"1px solid rgba(255,255,255,0.9)", overflow:"hidden", boxShadow:"0 4px 32px rgba(108,92,231,0.1)" }}>
           {APPS.map((app, i) => {
             const col = i % 3;
             const row = Math.floor(i / 3);
@@ -59,9 +59,9 @@ export default function Home({ setPage }) {
               >
                 <div style={{ display:"flex", alignItems:"center", gap:"14px", marginBottom:"10px" }}>
                   <AppIcon id={app.id} size={44} />
-                  <span style={{ fontSize:"15px",fontWeight:"700",color:"#1a1a2e",letterSpacing:"-0.3px" }}>{app.title}</span>
+                  <span style={{ fontSize:"15px",fontWeight:"700",color:"#f3f4f6",letterSpacing:"-0.3px" }}>{app.title}</span>
                 </div>
-                <p style={{ fontSize:"13px",color:"#6b7280",lineHeight:"1.6",paddingLeft:"58px" }}>{app.desc}</p>
+                <p style={{ fontSize:"13px",color:"#9ca3af",lineHeight:"1.6",paddingLeft:"58px" }}>{app.desc}</p>
               </div>
             );
           })}
