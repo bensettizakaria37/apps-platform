@@ -43,7 +43,7 @@ export default function App() {
         <button onClick={()=>navigate("home")} style={{
           display:"inline-flex",alignItems:"center",gap:"6px",
           padding:"8px 16px",borderRadius:"20px",border:"none",
-          background:"rgba(255,255,255,0.08)",backdropFilter:"blur(12px)",color:"#e5e7eb",
+          background:"rgba(255,255,255,0.08)",backdropFilter:"blur(12px)",
           boxShadow:"0 2px 10px rgba(108,92,231,0.12)",
           fontWeight:"600",fontSize:"13px",cursor:"pointer",
           transition:"all 0.15s",
